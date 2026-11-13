@@ -1,0 +1,14 @@
+<resources>
+    <style name="Theme.AgroAlert" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">#17634B</item>
+        <item name="colorPrimaryVariant">#103D33</item>
+        <item name="colorSecondary">#17634B</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">#F4F7F4</item>
+        <item name="android:navigationBarColor">#F4F7F4</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowBackground">#F4F7F4</item>
+        <item name="android:colorAccent">#17634B</item>
+    </style>
+</resources>

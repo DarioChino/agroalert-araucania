@@ -1,0 +1,12 @@
+.gradle/
+.idea/
+.kotlin/
+**/build/
+local.properties
+*.iml
+*.jks
+*.keystore
+keystore/
+__pycache__/
+simulator/credentials.json
+entregables/
