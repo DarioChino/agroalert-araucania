@@ -1,0 +1,28 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Araucaria araucana estilizada: copa y pisos de ramas, centro de la capa
+         (zona segura del icono adaptativo: círculo de 66 dp en 108x108). -->
+    <group>
+        <!-- Copa superior (medio domo) -->
+        <path
+            android:fillColor="#103D33"
+            android:pathData="M45,54.5 A9,13.5 0 0 1 63,54.5 Z" />
+        <!-- Piso 1 de ramas -->
+        <path
+            android:fillColor="#103D33"
+            android:pathData="M40,58 A14,3.2 0 0 1 68,58 A14,3.2 0 0 1 40,58 Z" />
+        <!-- Piso 2, el más ancho -->
+        <path
+            android:fillColor="#103D33"
+            android:pathData="M35.5,63.5 A18.5,3.8 0 0 1 72.5,63.5 A18.5,3.8 0 0 1 35.5,63.5 Z" />
+        <!-- Piso 3 -->
+        <path
+            android:fillColor="#103D33"
+            android:pathData="M40,68.5 A14,3 0 0 1 68,68.5 A14,3 0 0 1 40,68.5 Z" />
+        <!-- Tronco con base leve -->
+        <path
+            android:fillColor="#103D33"
+            android:pathData="M50.8,78.5 L57.2,78.5 L56.2,69.5 L51.8,69.5 Z" />
+    </group>
+</vector>

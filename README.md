@@ -5,9 +5,11 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 ## Qué está implementado
 
 - APK con cuatro pantallas: acceso, conexión Wi-Fi, monitoreo y control.
-- Configuración inicial de las contraseñas locales de `control` y `monitor`, sin claves predeterminadas.
+- Cuentas locales precreadas: `admin` (rol Control) y `monitor` (rol Monitor), con claves iniciales `admin1` y `monitor1`.
 - Contraseñas con sal aleatoria y PBKDF2-HMAC-SHA256 (120.000 iteraciones).
 - Bloqueo de ingreso por 60 segundos tras tres intentos fallidos, persistente al cerrar la app.
+- Modo oscuro opcional con botón «Modo oscuro / Modo claro» en cada pantalla, persistente al cerrar la app.
+- Ícono adaptativo con araucaria araucana estilizada (Android 8.0+, con capa monocromática para Android 13+).
 - Red TCP local, lectura cada 2 segundos desde el nodo, sin bloquear la interfaz.
 - Panel de temperatura, humedad, semáforo, relé, modo y actividad reciente.
 - Semáforo: normal >10 °C, prehelada >5 y ≤10 °C, riesgo crítico ≤5 °C.
@@ -95,12 +97,11 @@ La terminal muestra el puerto **5000** y dos **claves del nodo**, una por rol. S
 ### 3. Usar la app
 
 1. Instala el APK en ambos celulares.
-2. En el primer inicio, crea contraseñas locales distintas para `control` y `monitor` (mínimo 8 caracteres y confirmación). Estas contraseñas pertenecen a **cada instalación**.
-3. Celular A: inicia sesión como `control`. Celular B: como `monitor`.
-4. En ambos, escribe la misma IP y puerto. Introduce en cada uno la **clave del nodo correspondiente a su rol** que muestra el simulador.
-5. Verifica que los dos paneles muestran las mismas lecturas.
-6. En el celular Control, abre **Controlar el riego** y prueba encender, apagar y automático. Monitor debe reflejar el cambio y no mostrar controles.
-7. Detén el servidor: ambos equipos deben avisar la pérdida del enlace en aproximadamente 7–8 segundos, marcar los datos antiguos y bloquear órdenes.
+2. Inicia sesión con las cuentas precreadas: **admin / admin1** (Control) en el celular A y **monitor / monitor1** (Monitor) en el celular B. La clave de inicio de sesión es distinta de la clave del nodo.
+3. En ambos, escribe la misma IP y puerto. Introduce en cada uno la **clave del nodo correspondiente a su rol** que muestra el simulador.
+4. Verifica que los dos paneles muestran las mismas lecturas.
+5. En el celular Control, abre **Controlar el riego** y prueba encender, apagar y automático. Monitor debe reflejar el cambio y no mostrar controles.
+6. Detén el servidor: ambos equipos deben avisar la pérdida del enlace en aproximadamente 7–8 segundos, marcar los datos antiguos y bloquear órdenes.
 
 La app etiqueta visiblemente los datos del simulador. **No representan una medición real y no accionan hardware.** El modo manual del simulador dura como máximo 30 segundos; vuelve a automático al vencer ese plazo o desconectarse el último cliente Control.
 
@@ -131,7 +132,8 @@ Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicació
 - [Requisitos y decisiones tomadas del informe](docs/REQUISITOS.md).
 - [Pruebas y pasos de evaluación con hardware](docs/PRUEBAS.md).
 - [Revisión profunda del 11-11-2026](docs/REVISION.md).
-- [Actualización de dependencias del 13-11-2026](docs/ACTUALIZACION_13-11.md).
+- [Actualización del 13-11-2026: dependencias, ícono, cuentas y modo oscuro](docs/ACTUALIZACION_13-11.md).
+- [Guía de integración con Arduino real](docs/INTEGRACION_ARDUINO.md).
 
 ### Repositorio publicado
 

@@ -51,6 +51,7 @@ class ConnectionActivity : BaseActivity() {
             }
         }
         button("Cerrar sesión", secondary = true) { logout() }
+        button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true) { toggleDarkMode() }
         gap(16)
         label("¿Estás probando sin Arduino?\nInicia simulator/server.py en el computador y usa la IP y la clave que muestra la terminal.", 13, muted)
     }

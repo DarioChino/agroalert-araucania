@@ -1,29 +1,32 @@
-# Actualización de dependencias — 13-11-2026
+# Actualización del 13-11-2026
 
-Actualización menor: se refrescaron las bibliotecas de interfaz señaladas por
-Android Lint como con versiones más nuevas disponibles, se corrigieron los
-avisos de nulabilidad que introdujo la versión nueva, se recompiló todo y se
-regeneró el APK de publicación.
+Paquete de mejoras del 13-11-2026: refresco de bibliotecas, ícono adaptativo de
+araucaria, cuentas locales precreadas y modo oscuro opcional. Se recompiló,
+re-testearon y regeneraron los APK de entrega.
 
 ## Qué cambió
 
 | Cambio | Detalle |
 |---|---|
-| `androidx.appcompat` | 1.7.0 → **1.8.0** |
-| `com.google.android.material` | 1.12.0 → **1.14.0** |
-| Avisos de nulabilidad | appcompat 1.8.0 marca `getText()` como `@Nullable`; se ajustaron 9 lecturas de campos de texto con llamadas seguras (`text?.toString() ?: ""`) en `LoginActivity.kt` y `ConnectionActivity.kt`. Sin cambio de comportamiento. |
+| Bibliotecas de interfaz | `androidx.appcompat` 1.7.0 → **1.8.0** y `com.google.android.material` 1.12.0 → **1.14.0** |
+| Avisos de nulabilidad | appcompat 1.8.0 marca `getText()` como `@Nullable`; se ajustaron 9 lecturas con llamadas seguras. Sin cambio de comportamiento. |
+| Ícono adaptativo | Araucaria araucana estilizada (silueta `#103D33` sobre el gradiente de la marca `#9ADFB2→#2F7D54`), en `res/mipmap/` con capas background, foreground y **monochrome** (ícono temático en Android 13+). Reemplaza a `ic_agroalert.xml`. |
+| Cuentas locales | Login con usuario y contraseña normal. Se eliminó el formulario de primer inicio. Cuentas precreadas: `admin`/`admin1` (Control) y `monitor`/`monitor1` (Monitor), sembradas como hash PBKDF2 al primer arranque. `control` sigue aceptándose como alias de `admin`. |
+| Modo oscuro | Botón «Modo oscuro / Modo claro» en las cuatro pantallas. Tema `DayNight` con `values-night`, persistente entre sesiones. |
+| Carpeta de íconos | `mipmap-anydpi-v26/` → `mipmap/` (redundante con `minSdk 26`; aviso de Lint resuelto). |
 
-No cambió el número de versión (`1.0.0`, `versionCode 1`), los permisos ni la
-lógica: el APK nuevo se instala encima del anterior en el mismo celular.
+El bloqueo tras tres intentos fallidos (60 s) y todo el mecanismo PBKDF2 se
+mantienen sin cambios. Detalle de la decisión de cuentas y su desviación frente
+al informe en [REQUISITOS.md](REQUISITOS.md).
 
 ## Verificación
 
 | Comprobación | Resultado |
 |---|---|
-| Compilación limpia (debug + tests + lint + release) | Correcta, 2 m 27 s |
-| Avisos del compilador Kotlin | **0** (antes 9 por el cambio de anotaciones) |
-| Pruebas unitarias JVM | **6/6** |
-| Android Lint | **0 errores**, 15 avisos (los 2 de dependencia obsoleta desaparecieron) |
+| Compilación limpia (debug + tests + lint + release) | Correcta |
+| Avisos del compilador Kotlin | **0** |
+| Pruebas unitarias JVM | **7/7** (nuevo test: resolución de usuarios admin/monitor) |
+| Android Lint | **0 errores**, 13 avisos (los aceptados de estilo) |
 | Firma del release | Correcta (keystore propio) |
 
 ## Artefactos
@@ -36,18 +39,21 @@ lógica: el APK nuevo se instala encima del anterior en el mismo celular.
 SHA-256 del APK de publicación:
 
 ```text
-19E4E98C69AB8CB09F843481325A9CB7F929C9D601AF8C561653D05643638C11
+E35144ABA147A941DBE7BD281F064C13DBA3849AA54D23FC5F9C60A73905ECCA
 ```
 
 El mismo APK está en `assets/AgroAlert-1.0.apk` del sitio
 ([AgroAlertWeb](https://github.com/DarioChino/agroalert-web)), que publica la
-huella en la sección «Descargar».
+huella en la sección «Descargar». No cambió el número de versión (`1.0.0`,
+`versionCode 1`): el APK nuevo se instala encima del anterior.
 
 ## Publicación
 
 - Código de la app: https://github.com/DarioChino/agroalert-araucania
 - Sitio web: https://dariochino.github.io/agroalert-web/ (GitHub Pages, rama `main`)
-- El sitio se actualizó con el nuevo tamaño, fecha y huella SHA-256.
+- El sitio refleja tamaño, fecha y huella SHA-256 vigentes.
+- Nueva guía: [INTEGRACION_ARDUINO.md](INTEGRACION_ARDUINO.md) con las rutas de
+  hardware para salir del prototipo (ESP32 solo, ESP-01 puente o ESP32 puente).
 
 ## Cómo reproducir
 

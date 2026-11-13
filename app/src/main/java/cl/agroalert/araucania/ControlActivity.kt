@@ -44,6 +44,7 @@ class ControlActivity : BaseActivity() {
         gap(8, explanation)
         label("Manual: el nodo recibe tu orden de encender o apagar. El protocolo Wi-Fi propone volver a automático después de 30 segundos o al perder el controlador.\n\nAutomático: el nodo decide según la temperatura, incluso sin la app conectada.", 14, muted, parent = explanation)
         button("Volver al panel", secondary = true) { finish() }
+        button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true) { toggleDarkMode() }
     }
     override fun onStart() { super.onStart(); if (::status.isInitialized) agro.node.observe(observer) }
     override fun onStop() { agro.node.remove(observer); super.onStop() }

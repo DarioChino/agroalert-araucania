@@ -4,6 +4,15 @@ enum class Role(val wire: String, val label: String) {
     CONTROL("CONTROL", "Control"), MONITOR("MONITOR", "Monitor")
 }
 
+/** Nombres de usuario locales aceptados en el inicio de sesión. */
+object Users {
+    fun resolve(username: String): Role? = when (username.trim().lowercase()) {
+        "admin", "control" -> Role.CONTROL
+        "monitor" -> Role.MONITOR
+        else -> null
+    }
+}
+
 enum class Risk(val label: String) {
     OK("Condición normal"), PRE_HELADA("Alerta de prehelada"),
     HELADA_CRITICA("Riesgo crítico de helada"), SENSOR_ERROR("Revisar sensor")

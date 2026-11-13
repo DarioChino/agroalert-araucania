@@ -20,7 +20,7 @@ Decisión de implementación: Android nativo en Kotlin con sockets TCP de la pla
 |---|---|
 | Android Studio y Kotlin | Proyecto Gradle Android, Kotlin 2.0.21 |
 | Material Design | Componentes Material, campos con etiqueta, botones y cuatro pantallas |
-| Usuario y contraseña | Usuarios locales `control`/`monitor`, definidos en primer inicio |
+| Usuario y contraseña | Cuentas locales precreadas `admin` (Control) y `monitor` (Monitor); claves iniciales `admin1`/`monitor1` siembras como hash PBKDF2 |
 | Máximo tres intentos | Bloqueo temporal de 60 s persistido en preferencias privadas |
 | Contraseñas transformadas | PBKDF2, sal aleatoria por contraseña, comparación segura |
 | Dos celulares | Sesiones independientes al nodo compartido |
@@ -34,6 +34,14 @@ Decisión de implementación: Android nativo en Kotlin con sockets TCP de la pla
 | Falla de sensor | Extensión SENSOR:ERROR, sin valores ficticios, controles bloqueados |
 | Solo permisos necesarios | INTERNET y ACCESS_NETWORK_STATE; sin ubicación/Bluetooth/almacenamiento |
 | Código en GitHub | Publicado: https://github.com/DarioChino/agroalert-araucania |
+
+## Cambios del 13-11-2026 (solicitud de la persona usuaria)
+
+| Cambio | Motivo | Nota frente al informe |
+|---|---|---|
+| Cuentas precreadas `admin`/`monitor` en vez del formulario de primer inicio | Usabilidad en la demostración | El informe pedía accesos «definidos en primer inicio» y «sin claves predeterminadas». Ahora existen claves iniciales `admin1`/`monitor1`, sembradas como hash PBKDF2 la primera vez que se abre la app. Es una decisión del equipo; conviene comentarla con el docente. |
+| Modo oscuro opcional con botón en cada pantalla | Sensibilidad visual de la persona usuaria | No aparece en el informe; funcionalidad extra, sin impacto en los requisitos de seguridad. |
+| Ícono adaptativo de araucaria araucana | Identidad regional del proyecto | No aparece en el informe; cambio cosmético. |
 
 ## Puntos pendientes de confirmar
 

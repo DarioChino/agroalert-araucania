@@ -57,6 +57,7 @@ class DashboardActivity : BaseActivity() {
         }
         button("Cambiar conexión", secondary = true) { disconnectAndReturn() }
         button("Cerrar sesión", secondary = true) { logout() }
+        button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true) { toggleDarkMode() }
         gap()
         label("ACTIVIDAD DE ESTA SESIÓN", 11, muted, true)
         gap(8)

@@ -26,46 +26,10 @@ class LoginActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (agro.credentials.configured) loginPage() else setupPage()
+        loginPage()
     }
     override fun onStart() { super.onStart(); handler.post(timer) }
     override fun onStop() { handler.removeCallbacks(timer); super.onStop() }
-
-    private fun setupPage() {
-        page("Primer inicio", "Cuidemos tu cultivo.", "Configura el acceso local de este celular. El mismo APK sirve para Control y Monitor.")
-        val info = card()
-        label("Dos roles, un mismo huerto", 18, ink, true, info)
-        gap(8, info)
-        label("Control · consulta y envía órdenes al riego.\nMonitor · consulta las lecturas del nodo.", 14, muted, parent = info)
-        val control = field("Nueva contraseña de control", password = true)
-        val confirmControl = field("Repetir contraseña de control", password = true)
-        val monitor = field("Nueva contraseña de monitor", password = true)
-        val confirmMonitor = field("Repetir contraseña de monitor", password = true)
-        label("Usa contraseñas distintas de al menos 8 caracteres. Los usuarios serán control y monitor.", 13, muted)
-        gap()
-        feedback = label("", 14, red)
-        submit = button("Crear accesos") {
-            val c = control.text?.toString() ?: ""
-            val m = monitor.text?.toString() ?: ""
-            if (c.length < 8 || m.length < 8 || c == m) {
-                feedback.text = "Usa al menos 8 caracteres y contraseñas distintas para cada rol."
-            } else if (c != (confirmControl.text?.toString() ?: "") || m != (confirmMonitor.text?.toString() ?: "")) {
-                feedback.text = "Las contraseñas y sus confirmaciones deben coincidir."
-            } else {
-                busy = true; submit.isEnabled = false
-                Thread {
-                    val result = runCatching { agro.credentials.setup(c, m) }
-                    runOnUiThread {
-                        if (!isDestroyed) {
-                            busy = false
-                            if (result.isSuccess) loginPage()
-                            else { feedback.text = "No se pudieron guardar los accesos."; submit.isEnabled = true }
-                        }
-                    }
-                }.start()
-            }
-        }
-    }
 
     private fun loginPage() {
         page("Bienvenido", "Tu huerto, a la vista.", "Monitoreo agroclimático y control de riego para La Araucanía.")
@@ -75,7 +39,7 @@ class LoginActivity : BaseActivity() {
         label("Conecta. Observa. Actúa.", 22, ink, true, intro)
         gap(8, intro)
         label("Temperatura, humedad y estado del riego, desde tu red Wi-Fi.", 15, muted, parent = intro)
-        val username = field("Usuario: control o monitor")
+        val username = field("Usuario: admin o monitor")
         val password = field("Contraseña", password = true)
         feedback = label("3 intentos fallidos bloquean el ingreso durante 60 segundos.", 13, muted)
         gap()
@@ -104,6 +68,12 @@ class LoginActivity : BaseActivity() {
             }.start()
         }
         gap(22)
+        label("CUENTAS DE ESTE EQUIPO", 11, muted, true)
+        gap(4)
+        label("admin · Control del riego · clave inicial admin1\nmonitor · Solo lectura · clave inicial monitor1", 13, muted)
+        gap(14)
+        button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true) { toggleDarkMode() }
+        gap(10)
         label("PROYECTO TI3042 · INACAP\nDarío Candia & Sebastián Torres", 12, muted)
     }
 }

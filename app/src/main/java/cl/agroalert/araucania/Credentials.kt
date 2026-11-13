@@ -35,22 +35,23 @@ data class AttemptState(val failures: Int = 0, val blockedUntil: Long = 0) {
 class Credentials(context: Context) {
     private val prefs = context.getSharedPreferences("local_credentials", Context.MODE_PRIVATE)
     val configured get() = prefs.contains("control") && prefs.contains("monitor")
-    fun setup(control: String, monitor: String) {
-        check(!configured)
-        require(control.length in 8..128 && monitor.length in 8..128 && control != monitor)
-        prefs.edit().putString("control", PasswordHash.create(control))
-            .putString("monitor", PasswordHash.create(monitor)).commit()
+
+    init {
+        // Cuentas iniciales del equipo, una por rol: admin/admin1 (Control) y
+        // monitor/monitor1 (Monitor). Se siembran solo si esta instalación no
+        // tiene accesos y quedan guardadas como hash PBKDF2, nunca en texto plano.
+        if (!configured) prefs.edit()
+            .putString("control", PasswordHash.create("admin1"))
+            .putString("monitor", PasswordHash.create("monitor1"))
+            .commit()
     }
+
     private fun state() = AttemptState(prefs.getInt("failures", 0), prefs.getLong("blocked", 0))
     fun remaining() = state().remaining(System.currentTimeMillis())
     @Synchronized fun login(username: String, password: String): Role? {
         val now = System.currentTimeMillis()
         if (state().remaining(now) > 0) return null
-        val role = when (username.trim().lowercase()) {
-            "control" -> Role.CONTROL
-            "monitor" -> Role.MONITOR
-            else -> null
-        }
+        val role = Users.resolve(username)
         val stored = prefs.getString(role?.wire?.lowercase() ?: "", null)
         val valid = stored != null && password.length <= 128 && PasswordHash.verify(password, stored)
         val next = if (valid) AttemptState() else state().failed(now)

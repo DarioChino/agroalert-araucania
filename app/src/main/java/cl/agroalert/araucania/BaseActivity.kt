@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.button.MaterialButton
@@ -21,17 +22,22 @@ import com.google.android.material.textfield.TextInputLayout
 abstract class BaseActivity : AppCompatActivity() {
     protected val agro get() = application as AgroApplication
     protected lateinit var content: LinearLayout
-    protected val ink = Color.rgb(24, 48, 40)
-    protected val muted = Color.rgb(91, 111, 102)
-    protected val green = Color.rgb(23, 99, 75)
-    protected val amber = Color.rgb(145, 88, 0)
-    protected val red = Color.rgb(177, 43, 46)
+    /** Paleta según el modo elegido: claro (por omisión) u oscuro, para no forzar la vista. */
+    protected val dark get() = agro.darkMode
+    protected val ink get() = if (dark) Color.rgb(226, 236, 229) else Color.rgb(24, 48, 40)
+    protected val muted get() = if (dark) Color.rgb(150, 168, 158) else Color.rgb(91, 111, 102)
+    protected val green get() = if (dark) Color.rgb(106, 204, 160) else Color.rgb(23, 99, 75)
+    protected val amber get() = if (dark) Color.rgb(233, 177, 94) else Color.rgb(145, 88, 0)
+    protected val red get() = if (dark) Color.rgb(236, 124, 128) else Color.rgb(177, 43, 46)
     protected fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState) }
 
     protected fun page(section: String, title: String, subtitle: String) {
-        val scroll = ScrollView(this).apply { isFillViewport = true; setBackgroundColor(Color.rgb(244, 247, 244)) }
+        val scroll = ScrollView(this).apply {
+            isFillViewport = true
+            setBackgroundColor(if (dark) Color.rgb(12, 19, 16) else Color.rgb(244, 247, 244))
+        }
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(24), dp(22), dp(24), dp(28))
@@ -71,7 +77,9 @@ abstract class BaseActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), dp(18), dp(18), dp(18))
             background = GradientDrawable().apply {
-                setColor(Color.WHITE); cornerRadius = dp(20).toFloat(); setStroke(dp(1), Color.rgb(222, 231, 223))
+                setColor(if (dark) Color.rgb(25, 35, 30) else Color.WHITE)
+                cornerRadius = dp(20).toFloat()
+                setStroke(dp(1), if (dark) Color.rgb(46, 60, 53) else Color.rgb(222, 231, 223))
             }
         }
         parent.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) })
@@ -82,7 +90,7 @@ abstract class BaseActivity : AppCompatActivity() {
         val box = TextInputLayout(this).apply {
             this.hint = hint
             boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
-            boxBackgroundColor = Color.WHITE
+            boxBackgroundColor = if (dark) Color.rgb(25, 35, 30) else Color.WHITE
             setBoxCornerRadii(dp(12).toFloat(), dp(12).toFloat(), dp(12).toFloat(), dp(12).toFloat())
             if (password) endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
         }
@@ -112,6 +120,14 @@ abstract class BaseActivity : AppCompatActivity() {
             setOnClickListener { action() }
             content.addView(this, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(6) })
         }
+    }
+
+    /** Cambia el tema de la app y refresca todas las pantallas abiertas. */
+    protected fun toggleDarkMode() {
+        agro.setDarkMode(!agro.darkMode)
+        AppCompatDelegate.setDefaultNightMode(
+            if (agro.darkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+        )
     }
 
     protected fun requireSession(): Boolean {
