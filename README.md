@@ -28,7 +28,7 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 - **No probado aún** en celulares físicos ni con Arduino real. Las capturas incluidas son del simulador y están etiquetadas así.
 - Evidencias: [panel](docs/evidencias/02_panel_simulacion.png) y [control](docs/evidencias/03_control_simulacion.png).
 - Revisión del 11-11-2026: compilación limpia, **6/6** pruebas unitarias, **5/5** del simulador, Lint sin errores y flujo completo repetido en emulador **API 36**. Detalle en [docs/REVISION.md](docs/REVISION.md).
-- APK de publicación firmado (release + R8): `entregables/AgroAlert-1.0.apk`, 1,4 MB.
+- APK de publicación firmado (release + R8): `entregables/AgroAlert-1.0.apk`, 1,6 MB.
 
 ## Abrir en Android Studio
 
@@ -131,6 +131,7 @@ Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicació
 - [Requisitos y decisiones tomadas del informe](docs/REQUISITOS.md).
 - [Pruebas y pasos de evaluación con hardware](docs/PRUEBAS.md).
 - [Revisión profunda del 11-11-2026](docs/REVISION.md).
+- [Actualización de dependencias del 13-11-2026](docs/ACTUALIZACION_13-11.md).
 
 ### Repositorio publicado
 

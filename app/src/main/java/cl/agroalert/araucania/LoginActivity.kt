@@ -45,11 +45,11 @@ class LoginActivity : BaseActivity() {
         gap()
         feedback = label("", 14, red)
         submit = button("Crear accesos") {
-            val c = control.text.toString()
-            val m = monitor.text.toString()
+            val c = control.text?.toString() ?: ""
+            val m = monitor.text?.toString() ?: ""
             if (c.length < 8 || m.length < 8 || c == m) {
                 feedback.text = "Usa al menos 8 caracteres y contraseñas distintas para cada rol."
-            } else if (c != confirmControl.text.toString() || m != confirmMonitor.text.toString()) {
+            } else if (c != (confirmControl.text?.toString() ?: "") || m != (confirmMonitor.text?.toString() ?: "")) {
                 feedback.text = "Las contraseñas y sus confirmaciones deben coincidir."
             } else {
                 busy = true; submit.isEnabled = false
@@ -82,8 +82,8 @@ class LoginActivity : BaseActivity() {
         submit = button("Iniciar sesión") {
             if (busy) return@button
             busy = true; submit.isEnabled = false
-            val u = username.text.toString()
-            val p = password.text.toString()
+            val u = username.text?.toString() ?: ""
+            val p = password.text?.toString() ?: ""
             Thread {
                 val role = agro.credentials.login(u, p)
                 runOnUiThread {

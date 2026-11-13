@@ -74,3 +74,7 @@ SHA-256 del APK de publicación:
 ```text
 7DA174456A6B8192EDDCE4B896134DBECB4CB60183B8AC4A58386A6398D7ED40
 ```
+
+> Nota del 13-11-2026: este APK corresponde a la revisión de esa fecha. Tras
+> actualizar dependencias se regeneró el APK con otra huella; la vigente está en
+> [docs/ACTUALIZACION_13-11.md](ACTUALIZACION_13-11.md).

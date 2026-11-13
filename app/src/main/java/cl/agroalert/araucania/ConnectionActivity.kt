@@ -37,9 +37,9 @@ class ConnectionActivity : BaseActivity() {
         status = label("Listo para conectar", 14, green)
         gap()
         connect = button("Conectar por Wi-Fi") {
-            val address = host.text.toString().trim()
-            val p = port.text.toString().toIntOrNull()
-            val token = key.text.toString().trim()
+            val address = (host.text?.toString() ?: "").trim()
+            val p = port.text?.toString()?.toIntOrNull()
+            val token = (key.text?.toString() ?: "").trim()
             val validIp = address.split('.').let { parts -> parts.size == 4 && parts.all { it.isNotEmpty() && it.all(Char::isDigit) && (it.toIntOrNull() ?: -1) in 0..255 } }
             if (!validIp || p == null || p !in 1..65535) {
                 status.text = "Escribe una IPv4 válida (ej. 192.168.1.25) y un puerto entre 1 y 65535."
