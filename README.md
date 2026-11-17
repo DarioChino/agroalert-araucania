@@ -139,6 +139,7 @@ Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicació
 - [Revisión profunda del 11-11-2026](docs/REVISION.md).
 - [Actualización del 13-11-2026: dependencias, ícono, cuentas y modo oscuro](docs/ACTUALIZACION_13-11.md).
 - [Guía de integración con Arduino real](docs/INTEGRACION_ARDUINO.md).
+- [Mapa de cableado del Uno + HC-05 y compilación del firmware](docs/CABLEADO_ARDUINO.md).
 - [Probar el Bluetooth sin Arduino, con dos celulares](docs/SIMULADOR_BLUETOOTH.md).
 - [Huecos funcionales y ampliaciones pendientes](docs/HUECOS_FUNCIONALES.md): avisos de riesgo crítico, humedad de suelo y más control sobre el huerto.
 
