@@ -13,7 +13,7 @@ pocos datos y sin relaciones entre ellos.
 
 | Archivo | Contenido | Formato |
 |---|---|---|
-| `local_credentials` | Hash de la clave de cada rol (`salt:hash` en Base64) + contador de intentos fallidos y bloqueo | PBKDF2-HMAC-SHA256, 120.000 iteraciones, sal aleatoria de 16 bytes |
+| `local_credentials` | Hash de la clave de cada cuenta (`salt:hash` en Base64) + contador de intentos fallidos y bloqueo. Semillas `admin`/`monitor` y **cuentas propias creadas desde la app (v1.2.0)** bajo la clave `acct:<usuario>` | PBKDF2-HMAC-SHA256, 120.000 iteraciones, sal aleatoria de 16 bytes |
 | `bitacora` | Últimos 60 eventos del nodo (conexiones, órdenes, cambios de riesgo) | Líneas de texto `fecha · evento` |
 | `ui` | Modo claro/oscuro elegido | Booleano |
 | Telemetría | **No se persiste**: vive solo en memoria mientras la app está abierta | — |
@@ -24,17 +24,29 @@ queda en el teléfono es un hash con sal, distinto en cada instalación.
 `CredentialsTest` lo demuestra: dos claves iguales producen hashes distintos, y
 el hash no contiene la clave.
 
+### Cuentas propias (novedad 1.2.0)
+
+Desde la pantalla de ingreso cualquiera puede **crear su cuenta local** con el
+perfil (Control o Monitor) que esté seleccionado; queda guardada como hash en el
+mismo archivo privado y sobrevive al cierre de la app. Cada dueño cambia su
+clave con su clave actual, y un usuario Control puede **restablecer la clave de
+cualquier cuenta** (vía de recuperación sin email: quien tenga la clave de
+`admin` autoriza el cambio). Las semillas `admin`/`monitor` no se eliminan en
+ningún caso y comparten el mismo contador de bloqueo.
+
 ## 2. Respuesta lista para el docente (30 segundos)
 
-> «La app no usa SQL: el modelo de datos del prototipo es mínimo (un hash de
-> credencial por rol, contadores de bloqueo y una bitácora de 60 eventos), así
+> «La app no usa SQL: el modelo de datos del prototipo es mínimo (hashes de
+> credenciales, contadores de bloqueo y una bitácora de 60 eventos), así
 > que usamos SharedPreferences, el almacenamiento clave-valor **privado** de
-> Android. Las claves nunca se guardan en texto plano: van con **PBKDF2 con
-> sal** (120.000 iteraciones), comparación en tiempo constante y bloqueo por
-> intentos. La telemetría ni siquiera se persiste: es de solo lectura y caduca
-> a los 7 segundos. Si el proyecto crece a muchas cuentas o historial
-> consultable, el camino natural es **SQLite con Room** primero y cuentas en la
-> nube después — está documentado como etapa de escalabilidad.»
+> Android. Desde la versión 1.2.0 cada persona crea su propia cuenta en el
+> teléfono y puede cambiar o restablecer su clave. Las claves nunca se guardan
+> en texto plano: van con **PBKDF2 con sal** (120.000 iteraciones), comparación
+> en tiempo constante y bloqueo por intentos. La telemetría ni siquiera se
+> persiste: es de solo lectura y caduca a los 7 segundos. Si el proyecto crece
+> a historial consultable o cuentas en la nube con recuperación por correo, el
+> camino natural es **SQLite con Room** primero y **Firebase** después — está
+> documentado como etapa de escalabilidad.»
 
 Puntos fuertes a mencionar si pregunta más: `allowBackup=false` en el manifest
 (los datos no salen en backups), datos personales cero (solo rol), sin nube
