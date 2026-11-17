@@ -19,7 +19,11 @@ class ControlActivity : BaseActivity() {
             s.confirmation != null -> s.confirmation
             else -> s.message
         }
-        source.text = if (s.simulated) "SIMULADOR · LAS ÓRDENES NO ACTIVAN HARDWARE" else "NODO WI-FI · CONTROL DEL RELÉ"
+        source.text = when {
+            s.simulated -> "SIMULADOR · LAS ÓRDENES NO ACTIVAN HARDWARE"
+            s.bluetooth -> "NODO BLUETOOTH · CONTROL DEL RELÉ"
+            else -> "NODO WI-FI · CONTROL DEL RELÉ"
+        }
         relay.text = s.telemetry?.let {
             "Relé ${if (it.relay) "encendido" else "apagado"}\nModo ${if (it.automatic) "automático" else "manual"}${if (!fresh) " · dato antiguo" else ""}"
         } ?: "Sin lectura del nodo"

@@ -20,6 +20,14 @@ class CredentialsTest {
         assertEquals(0L, third.remaining(60_300))
         assertEquals(AttemptState(1, 0), third.failed(60_300))
     }
+    @Test fun `arduino bluetooth replies map to standard acks`() {
+        assertEquals("ACK:1", Protocol.ackForArduino("RELE:ENCENDIDO_MANUAL"))
+        assertEquals("ACK:0", Protocol.ackForArduino("RELE:APAGADO_MANUAL"))
+        assertEquals("ACK:A", Protocol.ackForArduino("MODO:AUTOMATICO"))
+        assertNull(Protocol.ackForArduino("TELEMETRIA|TEMP:15.0C|HUM:65%|RELE:APAGADO|MODO:AUTO|ESTADO:OK"))
+        assertNull(Protocol.ackForArduino("=== AGROALERT ARAUCANIA CONECTADO ==="))
+    }
+
     @Test fun `salted passwords verify without storing plaintext`() {
         val one = PasswordHash.create("clave-ejemplo")
         val two = PasswordHash.create("clave-ejemplo")

@@ -1,8 +1,17 @@
 package cl.agroalert.araucania
 
+import android.Manifest
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 
@@ -10,7 +19,15 @@ class ConnectionActivity : BaseActivity() {
     private lateinit var status: TextView
     private lateinit var connect: MaterialButton
     private lateinit var key: TextInputEditText
+    private lateinit var btStatus: TextView
+    private lateinit var btList: LinearLayout
     private var navigating = false
+    private val askBtPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) listBonded() else btStatus.text = "Sin el permiso de Bluetooth no puedo buscar el módulo."
+    }
+    private val enableBt = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) listBonded() else btStatus.text = "Activa el Bluetooth para buscar el módulo."
+    }
     private val observer: (NodeState) -> Unit = { state ->
         status.text = state.message
         connect.isEnabled = !state.connecting
@@ -24,9 +41,15 @@ class ConnectionActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         if (!requireSession()) return
         val prefs = getSharedPreferences("connection", MODE_PRIVATE)
-        page("01 / Conexión · ${agro.role!!.label}", "Enlaza tu nodo.", "Conecta el celular a la misma red Wi-Fi que el nodo AgroAlert o el simulador.")
+        page("01 / Conexión · ${agro.role!!.label}", "Enlaza tu nodo.", "Conecta por Bluetooth con el Arduino (HC-05) o por Wi-Fi con el nodo de red y el simulador.")
+        label("BLUETOOTH · ARDUINO + HC-05", 11, muted, true)
+        btStatus = label("Enciende el Arduino y tócalo en la lista. El PIN del HC-05 se pide UNA sola vez al vincular, en Ajustes de Android, nunca aquí.", 13, muted)
+        button("Buscar módulos emparejados") { listBonded() }
+        btList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        content.addView(btList, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) })
+        gap(10)
         val info = card()
-        label("Wi-Fi · red local", 18, ink, true, info)
+        label("Wi-Fi · red local (simulador o nodo)", 18, ink, true, info)
         gap(8, info)
         label("Cada celular abre su propia conexión. Ambos reciben el mismo estado del sistema.", 14, muted, parent = info)
         val host = field("Dirección IP del nodo", initial = prefs.getString("host", "") ?: "")
@@ -54,6 +77,40 @@ class ConnectionActivity : BaseActivity() {
         button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true) { toggleDarkMode() }
         gap(16)
         label("¿Estás probando sin Arduino?\nInicia simulator/server.py en el computador y usa la IP y la clave que muestra la terminal.", 13, muted)
+    }
+    private fun listBonded() {
+        val adapter = getSystemService(BluetoothManager::class.java)?.adapter
+        if (adapter == null) { btStatus.text = "Este celular no tiene Bluetooth."; return }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            askBtPermission.launch(Manifest.permission.BLUETOOTH_CONNECT)
+            return
+        }
+        if (!adapter.isEnabled) {
+            btStatus.text = "El Bluetooth del celular está apagado. Actívalo para buscar el módulo."
+            enableBt.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            return
+        }
+        btList.removeAllViews()
+        val devices = try {
+            adapter.bondedDevices.sortedWith(compareByDescending { it.name?.uppercase()?.contains("HC") == true })
+        } catch (_: SecurityException) { emptyList() }
+        if (devices.isEmpty()) {
+            btStatus.text = "Aún no hay ningún HC-05 vinculado a este celular. Vincúlalo una vez en Ajustes (el PIN lo pide ahí, no la app) y vuelve a intentar."
+            button("Abrir Ajustes de Bluetooth para vincular", secondary = true, parent = btList) {
+                startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+            }
+            return
+        }
+        btStatus.text = "Toca el módulo HC-05 del Arduino:"
+        devices.take(8).forEach { device ->
+            val name = try { device.name ?: device.address } catch (_: SecurityException) { device.address }
+            button("$name · ${device.address}", secondary = true, parent = btList) { connectBt(device) }
+        }
+    }
+    private fun connectBt(device: BluetoothDevice) {
+        try { agro.node.connectBluetooth(device, agro.role!!) }
+        catch (_: SecurityException) { btStatus.text = "Falta el permiso de Bluetooth; actívalo y vuelve a intentar." }
     }
     override fun onStart() {
         super.onStart()

@@ -46,9 +46,9 @@ class DashboardActivity : BaseActivity() {
         val limits = card()
         label("Umbrales del proyecto", 15, ink, true, limits)
         gap(8, limits)
-        label("● Normal             Más de 10 °C", 14, green, parent = limits)
-        label("● Prehelada         Más de 5 y hasta 10 °C", 14, amber, parent = limits)
-        label("● Riesgo crítico   5 °C o menos", 14, red, parent = limits)
+        label("● Normal · sobre 10 °C", 14, green, parent = limits)
+        label("● Prehelada · entre 5 y 10 °C", 14, amber, parent = limits)
+        label("● Riesgo crítico · 5 °C o menos", 14, red, parent = limits)
         if (agro.role == Role.CONTROL) {
             button("Controlar el riego") { startActivity(Intent(this, ControlActivity::class.java)) }
         } else {
@@ -69,7 +69,11 @@ class DashboardActivity : BaseActivity() {
     private fun disconnectAndReturn() { agro.node.disconnect(); finish() }
     private fun render(s: NodeState) {
         if (!::events.isInitialized) return
-        source.text = if (s.simulated) "SIMULACIÓN · NO SON MEDICIONES DEL HUERTO" else "NODO WI-FI · TELEMETRÍA RECIBIDA"
+        source.text = when {
+            s.simulated -> "SIMULACIÓN · NO SON MEDICIONES DEL HUERTO"
+            s.bluetooth -> "NODO BLUETOOTH · TELEMETRÍA RECIBIDA"
+            else -> "NODO WI-FI · TELEMETRÍA RECIBIDA"
+        }
         val fresh = s.connected && s.receivedAt > 0 && SystemClock.elapsedRealtime() - s.receivedAt <= 7000
         connection.text = if (fresh) "● En línea · ${s.message}" else "● ${s.message}"
         connection.setTextColor(if (fresh) green else red)

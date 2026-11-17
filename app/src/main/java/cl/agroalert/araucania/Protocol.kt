@@ -25,6 +25,15 @@ data class Telemetry(
 
 object Protocol {
     const val MAX_LINE = 512
+
+    /** El firmware Bluetooth original responde con texto propio; se traduce al ACK estándar. */
+    fun ackForArduino(line: String): String? = when (line) {
+        "RELE:ENCENDIDO_MANUAL" -> "ACK:1"
+        "RELE:APAGADO_MANUAL" -> "ACK:0"
+        "MODO:AUTOMATICO" -> "ACK:A"
+        else -> null
+    }
+
     fun riskFor(temperature: Double): Risk = when {
         temperature <= 5.0 -> Risk.HELADA_CRITICA
         temperature <= 10.0 -> Risk.PRE_HELADA

@@ -6,6 +6,7 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 
 - APK con cuatro pantallas: acceso, conexión Wi-Fi, monitoreo y control.
 - Cuentas locales precreadas: `admin` (rol Control) y `monitor` (rol Monitor), con claves iniciales `admin1` y `monitor1`.
+- **Conexión Bluetooth directa al Arduino Uno + HC-05** documentado en la web del proyecto, sin servidor local: [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
 - Contraseñas con sal aleatoria y PBKDF2-HMAC-SHA256 (120.000 iteraciones).
 - Bloqueo de ingreso por 60 segundos tras tres intentos fallidos, persistente al cerrar la app.
 - Modo oscuro opcional con botón «Modo oscuro / Modo claro» en cada pantalla, persistente al cerrar la app.
@@ -30,7 +31,7 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 - **No probado aún** en celulares físicos ni con Arduino real. Las capturas incluidas son del simulador y están etiquetadas así.
 - Evidencias: [panel](docs/evidencias/02_panel_simulacion.png) y [control](docs/evidencias/03_control_simulacion.png).
 - Revisión del 11-11-2026: compilación limpia, **6/6** pruebas unitarias, **5/5** del simulador, Lint sin errores y flujo completo repetido en emulador **API 36**. Detalle en [docs/REVISION.md](docs/REVISION.md).
-- APK de publicación firmado (release + R8): `entregables/AgroAlert-1.0.apk`, 1,6 MB.
+- APK de publicación firmado (release + R8): `entregables/AgroAlert-1.1.0.apk`, 1,6 MB.
 
 ## Abrir en Android Studio
 
@@ -121,7 +122,7 @@ Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicació
 | `ConnectionActivity.kt` | Dirección, puerto y credencial del nodo |
 | `DashboardActivity.kt` | Telemetría, semáforo y eventos |
 | `ControlActivity.kt` | Órdenes y confirmaciones |
-| `NodeConnection.kt` | Sockets, autenticación, caducidad y estado del enlace |
+| `NodeConnection.kt` | Sockets TCP y Bluetooth SPP, autenticación, caducidad y estado del enlace |
 | `Protocol.kt` | Validación estricta de telemetría |
 | `Credentials.kt` | Hashes y bloqueo de intentos |
 | `simulator/server.py` | Nodo compartido reproducible sin hardware |
@@ -134,6 +135,7 @@ Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicació
 - [Revisión profunda del 11-11-2026](docs/REVISION.md).
 - [Actualización del 13-11-2026: dependencias, ícono, cuentas y modo oscuro](docs/ACTUALIZACION_13-11.md).
 - [Guía de integración con Arduino real](docs/INTEGRACION_ARDUINO.md).
+- [Huecos funcionales y ampliaciones pendientes](docs/HUECOS_FUNCIONALES.md): avisos de riesgo crítico, humedad de suelo y más control sobre el huerto.
 
 ### Repositorio publicado
 
@@ -153,6 +155,16 @@ git push
 ```
 
 Luego pega el enlace del repositorio en la tarea del AAI, como pide la guía.
+
+## Historial de versiones
+
+Cada versión queda etiquetada en Git para poder comparar el código de una
+entrega con otra:
+
+| Versión | Tag | Qué agrega |
+|---|---|---|
+| 1.1.0 | `v1.1.0` | Conexión Bluetooth SPP directa al Arduino + HC-05, login con tarjetas de perfil, modo BT activable desde la app, `attack.py` de seguridad, guía de demo en 30 minutos |
+| 1.0.0 | `v1.0.0` | Cuatro pantallas, TCP/Wi-Fi al simulador, PBKDF2, bloqueo, modo oscuro, ícono adaptativo |
 
 ## Alcance del prototipo
 

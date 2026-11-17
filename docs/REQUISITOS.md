@@ -43,6 +43,15 @@ Decisión de implementación: Android nativo en Kotlin con sockets TCP de la pla
 | Modo oscuro opcional con botón en cada pantalla | Sensibilidad visual de la persona usuaria | No aparece en el informe; funcionalidad extra, sin impacto en los requisitos de seguridad. |
 | Ícono adaptativo de araucaria araucana | Identidad regional del proyecto | No aparece en el informe; cambio cosmético. |
 
+## Ampliaciones pendientes (13-11-2026)
+
+Solicitadas por la persona usuaria y **fuera del alcance del informe entregado**: avisos
+de riesgos críticos (frío, humedad excesiva, tierra seca), humedad de suelo y control
+adicional del huerto (zonas de riego, ventilación, programación). Se detallan, con su
+impacto por archivo y el orden de trabajo, en
+[HUECOS_FUNCIONALES.md](HUECOS_FUNCIONALES.md). La trazabilidad de los requisitos del
+informe no se modifica con estas líneas.
+
 ## Puntos pendientes de confirmar
 
 - Modelo exacto del módulo Wi-Fi o placa (ESP-01/ESP8266, ESP32, shield u otro).

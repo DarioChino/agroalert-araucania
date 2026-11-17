@@ -109,7 +109,7 @@ abstract class BaseActivity : AppCompatActivity() {
         return input
     }
 
-    protected fun button(text: String, secondary: Boolean = false, action: () -> Unit): MaterialButton {
+    protected fun button(text: String, secondary: Boolean = false, parent: LinearLayout = content, action: () -> Unit): MaterialButton {
         val style = if (secondary) com.google.android.material.R.attr.materialButtonOutlinedStyle else com.google.android.material.R.attr.materialButtonStyle
         return MaterialButton(this, null, style).apply {
             this.text = text
@@ -118,7 +118,7 @@ abstract class BaseActivity : AppCompatActivity() {
             cornerRadius = dp(14)
             minHeight = dp(54)
             setOnClickListener { action() }
-            content.addView(this, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(6) })
+            parent.addView(this, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(6) })
         }
     }
 
