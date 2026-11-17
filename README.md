@@ -7,6 +7,7 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 - APK con cuatro pantallas: acceso, conexión Wi-Fi, monitoreo y control.
 - Cuentas locales precreadas: `admin` (rol Control) y `monitor` (rol Monitor), con claves iniciales `admin1` y `monitor1`.
 - **Conexión Bluetooth directa al Arduino Uno + HC-05** documentado en la web del proyecto, sin servidor local: [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
+- **Arquitectura en dos etapas** que integra el trabajo de ambos integrantes: este repo es la capa de conexión real (Uno+HC-05 hoy, TCP mañana) y el repo de Sebastián Torres define la interfaz Compose y el firmware ESP32+Firebase de la etapa de escalabilidad: [docs/ARQUITECTURA_COMBINADA.md](docs/ARQUITECTURA_COMBINADA.md).
 - Contraseñas con sal aleatoria y PBKDF2-HMAC-SHA256 (120.000 iteraciones).
 - Bloqueo de ingreso por 60 segundos tras tres intentos fallidos, persistente al cerrar la app.
 - Modo oscuro opcional con botón «Modo oscuro / Modo claro» en cada pantalla, persistente al cerrar la app.
@@ -129,6 +130,7 @@ Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicació
 
 ## Documentación y entrega
 
+- [Arquitectura combinada de ambos repos y justificación Wi-Fi → Bluetooth](docs/ARQUITECTURA_COMBINADA.md).
 - [Contrato para el futuro módulo Wi-Fi](docs/PROTOCOLO_WIFI.md).
 - [Requisitos y decisiones tomadas del informe](docs/REQUISITOS.md).
 - [Pruebas y pasos de evaluación con hardware](docs/PRUEBAS.md).
