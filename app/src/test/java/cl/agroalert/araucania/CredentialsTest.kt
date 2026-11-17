@@ -13,6 +13,24 @@ class CredentialsTest {
         assertNull(Users.resolve("root"))
         assertNull(Users.resolve(""))
     }
+    @Test fun `custom account validation accepts valid names and rejects reserved or malformed`() {
+        assertNull(LocalAccounts.validate("profe.juan_1", "clave123"))
+        assertEquals("profe.juan_1", LocalAccounts.normalize("  Profe.Juan_1 "))
+        assertNotNull(LocalAccounts.validate("ab", "clave123"))
+        assertNotNull(LocalAccounts.validate("a ".repeat(11) + "x", "clave123"))
+        assertNotNull(LocalAccounts.validate("mi cuenta", "clave123"))
+        assertNotNull(LocalAccounts.validate("admin", "clave123"))
+        assertNotNull(LocalAccounts.validate("monitor", "clave123"))
+        assertNotNull(LocalAccounts.validate("profe", "abc"))
+        assertNotNull(LocalAccounts.validate("profe", "x".repeat(129)))
+    }
+    @Test fun `custom account record roundtrip keeps role and credential`() {
+        val parsed = LocalAccounts.decode("MONITOR:c2FsdA==:aGFzaA==")
+        assertEquals(Role.MONITOR, parsed?.first)
+        assertEquals("c2FsdA==:aGFzaA==", parsed?.second)
+        assertNull(LocalAccounts.decode("garbage"))
+        assertNull(LocalAccounts.decode("OTRO:c2FsdA==:aGFzaA=="))
+    }
     @Test fun `third failure locks for sixty seconds and then allows retry`() {
         val third = AttemptState().failed(100).failed(200).failed(300)
         assertEquals(60_000L, third.remaining(300))

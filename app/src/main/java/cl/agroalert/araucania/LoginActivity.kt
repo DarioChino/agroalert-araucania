@@ -22,6 +22,14 @@ class LoginActivity : BaseActivity() {
     private lateinit var cardMonitor: LinearLayout
     private lateinit var checkControl: TextView
     private lateinit var checkMonitor: TextView
+    private lateinit var userName: TextInputEditText
+    private lateinit var newUser: TextInputEditText
+    private lateinit var newPass: TextInputEditText
+    private lateinit var accountFeedback: TextView
+    private lateinit var chgUser: TextInputEditText
+    private lateinit var chgAuth: TextInputEditText
+    private lateinit var chgNew: TextInputEditText
+    private lateinit var resetFeedback: TextView
     private var busy = false
     private var selected: Role = Role.CONTROL
     private val timer = object : Runnable {
@@ -95,13 +103,15 @@ class LoginActivity : BaseActivity() {
         row.addView(cardControl, LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dp(10) })
         row.addView(cardMonitor, LinearLayout.LayoutParams(0, -2, 1f))
 
+        userName = field("Usuario (opcional · admin, monitor o cuenta propia)")
         password = field("Contraseña", password = true)
         feedback = label("3 intentos fallidos bloquean el ingreso durante 60 segundos.", 13, muted)
         gap()
         submit = button("Entrar como Control") {
             if (busy) return@button
             busy = true; submit.isEnabled = false
-            val user = if (selected == Role.CONTROL) "admin" else "monitor"
+            val typed = userName.text?.toString()?.trim() ?: ""
+            val user = typed.ifEmpty { if (selected == Role.CONTROL) "admin" else "monitor" }
             val p = password.text?.toString() ?: ""
             Thread {
                 val role = agro.credentials.login(user, p)
@@ -125,6 +135,66 @@ class LoginActivity : BaseActivity() {
         paintCards()
         gap(18)
         label("CLAVES INICIALES · admin: admin1 · monitor: monitor1", 13, muted)
+        gap(18)
+        label("TU PROPIA CUENTA · QUEDA GUARDADA EN ESTE TELÉFONO", 11, muted, true)
+        newUser = field("Usuario nuevo")
+        newPass = field("Contraseña nueva", password = true)
+        accountFeedback = label("La cuenta usará el perfil elegido arriba (Control o Monitor).", 13, muted)
+        button("Crear cuenta") {
+            if (busy) return@button
+            busy = true
+            accountFeedback.setTextColor(muted)
+            accountFeedback.text = "Creando cuenta…"
+            val user = newUser.text?.toString() ?: ""
+            val pass = newPass.text?.toString() ?: ""
+            Thread {
+                val problem = agro.credentials.register(user, pass, selected)
+                runOnUiThread {
+                    busy = false
+                    if (!isDestroyed) {
+                        if (problem == null) {
+                            newUser.text?.clear(); newPass.text?.clear()
+                            accountFeedback.setTextColor(green)
+                            accountFeedback.text = "Cuenta creada para ${LocalAccounts.normalize(user)}. Ya puedes iniciar sesión con ella."
+                        } else {
+                            accountFeedback.setTextColor(red)
+                            accountFeedback.text = problem
+                        }
+                    }
+                }
+            }.start()
+        }
+        gap(18)
+        label("CAMBIAR O RECUPERAR CONTRASEÑA", 11, muted, true)
+        chgUser = field("Usuario a cambiar")
+        chgAuth = field("Clave actual de esa cuenta o del admin", password = true)
+        chgNew = field("Clave nueva", password = true)
+        resetFeedback = label("El dueño cambia su clave con su clave actual; admin puede restablecer la de cualquiera (recuperación).", 13, muted)
+        button("Guardar nueva clave", secondary = true) {
+            if (busy) return@button
+            busy = true
+            resetFeedback.setTextColor(muted)
+            resetFeedback.text = "Guardando…"
+            val user = chgUser.text?.toString() ?: ""
+            val auth = chgAuth.text?.toString() ?: ""
+            val newPass2 = chgNew.text?.toString() ?: ""
+            Thread {
+                val problem = agro.credentials.changePassword(user, auth, newPass2)
+                runOnUiThread {
+                    busy = false
+                    if (!isDestroyed) {
+                        if (problem == null) {
+                            chgUser.text?.clear(); chgAuth.text?.clear(); chgNew.text?.clear()
+                            resetFeedback.setTextColor(green)
+                            resetFeedback.text = "Clave actualizada para ${LocalAccounts.normalize(user)}."
+                        } else {
+                            resetFeedback.setTextColor(red)
+                            resetFeedback.text = problem
+                        }
+                    }
+                }
+            }.start()
+        }
         gap(14)
         button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true) { toggleDarkMode() }
         gap(10)

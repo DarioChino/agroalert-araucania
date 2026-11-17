@@ -13,6 +13,31 @@ object Users {
     }
 }
 
+/**
+ * Cuentas propias creadas en el teléfono: validación de datos y decodificación del
+ * registro persistente "ROL:salt:hash" guardado en SharedPreferences.
+ */
+object LocalAccounts {
+    private val NAME = Regex("[a-z0-9._]{3,20}")
+    private val RESERVED = setOf("admin", "control", "monitor")
+
+    fun normalize(username: String) = username.trim().lowercase()
+
+    /** null si los datos sirven; si no, el motivo para mostrar en pantalla. */
+    fun validate(username: String, password: String): String? = when {
+        !NAME.matches(normalize(username)) -> "El usuario debe tener 3 a 20 letras, números, punto o guion bajo."
+        normalize(username) in RESERVED -> "Ese nombre está reservado para las cuentas del equipo."
+        password.length !in 4..128 -> "La contraseña debe tener entre 4 y 128 caracteres."
+        else -> null
+    }
+
+    /** Devuelve el rol y la credencial "salt:hash" del registro, o null si está corrupto. */
+    fun decode(record: String): Pair<Role, String>? = runCatching {
+        val (wire, stored) = record.split(':', limit = 2)
+        Pair(Role.valueOf(wire), stored)
+    }.getOrNull()
+}
+
 enum class Risk(val label: String) {
     OK("Condición normal"), PRE_HELADA("Alerta de prehelada"),
     HELADA_CRITICA("Riesgo crítico de helada"), SENSOR_ERROR("Revisar sensor")

@@ -51,11 +51,49 @@ class Credentials(context: Context) {
     @Synchronized fun login(username: String, password: String): Role? {
         val now = System.currentTimeMillis()
         if (state().remaining(now) > 0) return null
-        val role = Users.resolve(username)
-        val stored = prefs.getString(role?.wire?.lowercase() ?: "", null)
-        val valid = stored != null && password.length <= 128 && PasswordHash.verify(password, stored)
+        val name = LocalAccounts.normalize(username)
+        val role = Users.resolve(name)
+        val stored = prefs.getString(role?.wire?.lowercase() ?: "acct:$name", null)
+        val custom = if (role == null) stored?.let { LocalAccounts.decode(it) } else null
+        val valid = stored != null && password.length <= 128 && when {
+            custom != null -> PasswordHash.verify(password, custom.second)
+            else -> PasswordHash.verify(password, stored)
+        }
         val next = if (valid) AttemptState() else state().failed(now)
         prefs.edit().putInt("failures", next.failures).putLong("blocked", next.blockedUntil).commit()
-        return if (valid) role else null
+        return if (valid) role ?: custom?.first else null
+    }
+
+    /** Crea una cuenta propia en este teléfono. Devuelve null si quedó creada, o el motivo del rechazo. */
+    fun register(username: String, password: String, role: Role): String? {
+        LocalAccounts.validate(username, password)?.let { return it }
+        val key = "acct:${LocalAccounts.normalize(username)}"
+        if (prefs.contains(key)) return "Ese usuario ya existe en este teléfono."
+        prefs.edit().putString(key, "${role.wire}:${PasswordHash.create(password)}").commit()
+        return null
+    }
+
+    /**
+     * Cambia o restablece la clave de cualquier cuenta. La autorización es la clave
+     * vigente de la propia cuenta o la de un usuario Control (vía de recuperación).
+     * Devuelve null si el cambio quedó aplicado, o el motivo del rechazo.
+     */
+    fun changePassword(target: String, auth: String, newPassword: String): String? {
+        val name = LocalAccounts.normalize(target)
+        if (name.isEmpty()) return "Indica el usuario a cambiar."
+        if (newPassword.length !in 4..128 || auth.length > 128) return "Las contraseñas deben tener entre 4 y 128 caracteres."
+        val role = Users.resolve(name)
+        val key = role?.wire?.lowercase() ?: "acct:$name"
+        val record = prefs.getString(key, null) ?: return "Ese usuario no existe en este teléfono."
+        val selfOk = when (role) {
+            null -> LocalAccounts.decode(record)?.let { PasswordHash.verify(auth, it.second) } ?: false
+            else -> PasswordHash.verify(auth, record)
+        }
+        if (!selfOk && !PasswordHash.verify(auth, prefs.getString("control", "") ?: ""))
+            return "La clave de autorización no coincide: usa la clave actual de esa cuenta o la del usuario admin."
+        val newRecord = if (role != null) PasswordHash.create(newPassword)
+            else "${LocalAccounts.decode(record)!!.first.wire}:${PasswordHash.create(newPassword)}"
+        prefs.edit().putString(key, newRecord).commit()
+        return null
     }
 }
