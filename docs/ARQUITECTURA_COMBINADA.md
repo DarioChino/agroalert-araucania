@@ -77,7 +77,7 @@ Wi-Fi hacia la nube y la interfaz evoluciona a la app Compose de Sebastián.
 | Fase | Alcance | Estado |
 |---|---|---|
 | 1 | Arquitectura combinada y justificación de transporte (este documento) | ✅ 17-11-2026 |
-| 2 | Portar la bitácora de campo de Sebastián a esta app, con crédito | Planificada |
+| 2 | Portar la bitácora de campo de Sebastián a esta app, con crédito | ✅ 17-11-2026 (`Bitacora.kt`) |
 | 3 | Interfaz Compose/MVVM de Sebastián sobre `NodeConnection` real (TCP+SPP) | Después de la entrega |
 
 ## 6. Demo (30 min)

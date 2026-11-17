@@ -15,6 +15,7 @@ class AgroApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         ui = getSharedPreferences("ui", Context.MODE_PRIVATE)
+        Bitacora.init(this)
         AppCompatDelegate.setDefaultNightMode(
             if (darkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
         )

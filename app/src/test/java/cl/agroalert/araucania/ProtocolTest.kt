@@ -30,4 +30,16 @@ class ProtocolTest {
         assertNull(t.humidity)
         assertEquals(Risk.SENSOR_ERROR, t.risk)
     }
+    @Test fun `ambient humidity thresholds match the backlog`() {
+        for ((h, nivel) in listOf(40.0 to Nivel.NORMAL, 75.0 to Nivel.NORMAL, 75.1 to Nivel.ALERTA,
+            84.9 to Nivel.ALERTA, 85.0 to Nivel.CRITICO, 34.9 to Nivel.ALERTA, 35.0 to Nivel.NORMAL)) {
+            assertEquals("$h %", nivel, Protocol.humidityLevel(h))
+        }
+    }
+    @Test fun `temperature levels map to alert levels and sensor error has none`() {
+        assertEquals(Nivel.NORMAL, Protocol.temperatureLevel(Risk.OK))
+        assertEquals(Nivel.ALERTA, Protocol.temperatureLevel(Risk.PRE_HELADA))
+        assertEquals(Nivel.CRITICO, Protocol.temperatureLevel(Risk.HELADA_CRITICA))
+        assertNull(Protocol.temperatureLevel(Risk.SENSOR_ERROR))
+    }
 }

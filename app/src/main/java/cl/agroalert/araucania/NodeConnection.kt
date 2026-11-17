@@ -47,6 +47,7 @@ class NodeConnection {
     fun remove(listener: (NodeState) -> Unit) { listeners.remove(listener) }
     private fun update(value: NodeState) { state = value; listeners.toList().forEach { it(value) } }
     private fun event(text: String): List<String> {
+        Bitacora.log(text) // el historial persistente guarda los mismos eventos de la sesión
         val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
         return (listOf("$time · $text") + state.events).take(12)
     }

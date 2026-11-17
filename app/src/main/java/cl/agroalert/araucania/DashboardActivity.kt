@@ -17,7 +17,9 @@ class DashboardActivity : BaseActivity() {
     private lateinit var risk: TextView
     private lateinit var relay: TextView
     private lateinit var age: TextView
+    private lateinit var banner: TextView
     private lateinit var events: TextView
+    private lateinit var history: TextView
     private val handler = Handler(Looper.getMainLooper())
     private val observer: (NodeState) -> Unit = { render(it) }
     private val clock = object : Runnable {
@@ -31,6 +33,8 @@ class DashboardActivity : BaseActivity() {
         source = label("", 12, amber, true)
         connection = label("", 14, green, true)
         age = label("Esperando la primera lectura…", 12, muted)
+        banner = label("", 14, amber, true)
+        banner.visibility = android.view.View.GONE
         gap()
         val climate = card()
         label("TEMPERATURA AMBIENTAL", 11, muted, true, climate)
@@ -49,6 +53,7 @@ class DashboardActivity : BaseActivity() {
         label("● Normal · sobre 10 °C", 14, green, parent = limits)
         label("● Prehelada · entre 5 y 10 °C", 14, amber, parent = limits)
         label("● Riesgo crítico · 5 °C o menos", 14, red, parent = limits)
+        button("Alertas y riesgos") { startActivity(Intent(this, AlertsActivity::class.java)) }
         if (agro.role == Role.CONTROL) {
             button("Controlar el riego") { startActivity(Intent(this, ControlActivity::class.java)) }
         } else {
@@ -62,6 +67,11 @@ class DashboardActivity : BaseActivity() {
         label("ACTIVIDAD DE ESTA SESIÓN", 11, muted, true)
         gap(8)
         events = label("", 13, muted)
+        gap(14)
+        label("BITÁCORA DE CAMPO · PERSISTENTE", 11, muted, true)
+        gap(8)
+        history = label("", 13, muted)
+        label("Estos eventos quedan guardados en el teléfono aunque cierres la app. Bitácora basada en la propuesta de Sebastián Torres.", 12, muted)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { disconnectAndReturn() }
         })
@@ -90,6 +100,18 @@ class DashboardActivity : BaseActivity() {
             "Relé ${if (t.relay) "encendido" else "apagado"} · ${if (t.automatic) "Automático" else "Manual"}${if (!fresh) "\nÚltimo estado conocido" else ""}"
         }
         events.text = s.events.joinToString("\n")
+        history.text = Bitacora.recent().take(10).joinToString("\n")
+        val levels = if (fresh && t != null) listOfNotNull(
+            if (t.risk == Risk.SENSOR_ERROR) null else Protocol.temperatureLevel(t.risk),
+            t.humidity?.let { Protocol.humidityLevel(it) }
+        ) else emptyList()
+        banner.text = when {
+            Nivel.CRITICO in levels -> "⚠ RIESGO CRÍTICO EN EL HUERTO · revisa «Alertas y riesgos»"
+            Nivel.ALERTA in levels -> "Alerta preventiva vigente · revisa «Alertas y riesgos»"
+            else -> ""
+        }
+        banner.setTextColor(if (Nivel.CRITICO in levels) red else amber)
+        banner.visibility = if (banner.text.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE
     }
     override fun onStart() { super.onStart(); if (::events.isInitialized) { agro.node.observe(observer); handler.post(clock) } }
     override fun onStop() { agro.node.remove(observer); handler.removeCallbacks(clock); super.onStop() }

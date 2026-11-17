@@ -134,7 +134,8 @@ TELEMETRIA|TEMP:3.0C|HUM:88%|SUELO:22%|RELE:APAGADO|MODO:AUTO|ESTADO:HELADA_CRIT
 
 ## 7. Estado
 
-- [ ] F1 Pantalla de alertas y banner de riesgo crítico
+- [x] F1 Pantalla de alertas y banner de riesgo crítico — **17-11-2026**: `AlertsActivity` (temperatura, humedad ambiente y suelo marcado como no disponible) + banner en el panel; umbrales de humedad en `Protocol.humidityLevel()`.
+- [x] Bitácora de campo persistida — **17-11-2026**: `Bitacora.kt`, portada de la propuesta de Sebastián Torres con su crédito.
 - [ ] F2 Humedad de suelo en protocolo y simulador
 - [ ] F3 Controles adicionales del huerto (zonas, ventilación, programación)
 - [ ] F4 Protocolo extendido documentado

@@ -18,6 +18,11 @@ enum class Risk(val label: String) {
     HELADA_CRITICA("Riesgo crítico de helada"), SENSOR_ERROR("Revisar sensor")
 }
 
+/** Niveles de riesgo por factor, de menor a mayor severidad. */
+enum class Nivel(val label: String) {
+    NORMAL("Normal"), ALERTA("Alerta"), CRITICO("Crítico")
+}
+
 data class Telemetry(
     val temperature: Double?, val humidity: Double?, val relay: Boolean,
     val automatic: Boolean, val risk: Risk
@@ -38,6 +43,21 @@ object Protocol {
         temperature <= 5.0 -> Risk.HELADA_CRITICA
         temperature <= 10.0 -> Risk.PRE_HELADA
         else -> Risk.OK
+    }
+
+    /** Traduce el riesgo térmico a nivel de alerta; null significa sin datos. */
+    fun temperatureLevel(risk: Risk): Nivel? = when (risk) {
+        Risk.OK -> Nivel.NORMAL
+        Risk.PRE_HELADA -> Nivel.ALERTA
+        Risk.HELADA_CRITICA -> Nivel.CRITICO
+        Risk.SENSOR_ERROR -> null
+    }
+
+    /** Humedad ambiente: 40-75 % normal; fuera de rango alerta; 85 % o más es crítico (moho). */
+    fun humidityLevel(humidity: Double): Nivel = when {
+        humidity >= 85.0 -> Nivel.CRITICO
+        humidity > 75.0 || humidity < 35.0 -> Nivel.ALERTA
+        else -> Nivel.NORMAL
     }
 
     /** El formato coincide con la telemetría publicada; SENSOR_ERROR es la extensión Wi-Fi. */

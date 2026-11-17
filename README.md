@@ -8,6 +8,8 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 - Cuentas locales precreadas: `admin` (rol Control) y `monitor` (rol Monitor), con claves iniciales `admin1` y `monitor1`.
 - **Conexión Bluetooth directa al Arduino Uno + HC-05** documentado en la web del proyecto, sin servidor local: [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
 - **Arquitectura en dos etapas** que integra el trabajo de ambos integrantes: este repo es la capa de conexión real (Uno+HC-05 hoy, TCP mañana) y el repo de Sebastián Torres define la interfaz Compose y el firmware ESP32+Firebase de la etapa de escalabilidad: [docs/ARQUITECTURA_COMBINADA.md](docs/ARQUITECTURA_COMBINADA.md).
+- **Pantalla «Alertas y riesgos»** (frío, humedad ambiente y suelo) con banner de riesgo crítico en el panel: [docs/HUECOS_FUNCIONALES.md](docs/HUECOS_FUNCIONALES.md).
+- **Bitácora de campo persistente**: la actividad del nodo queda guardada en el teléfono aunque se cierre la app (propuesta de Sebastián Torres, portada con crédito).
 - Contraseñas con sal aleatoria y PBKDF2-HMAC-SHA256 (120.000 iteraciones).
 - Bloqueo de ingreso por 60 segundos tras tres intentos fallidos, persistente al cerrar la app.
 - Modo oscuro opcional con botón «Modo oscuro / Modo claro» en cada pantalla, persistente al cerrar la app.
