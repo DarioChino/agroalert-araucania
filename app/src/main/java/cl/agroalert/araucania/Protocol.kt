@@ -19,16 +19,29 @@ object Users {
  */
 object LocalAccounts {
     private val NAME = Regex("[a-z0-9._]{3,20}")
+    private val MAYUS = Regex("[A-Z]")
+    private val MINUS = Regex("[a-z]")
+    private val DIGITO = Regex("[0-9]")
     private val RESERVED = setOf("admin", "control", "monitor")
+    private val COMMON = listOf("1234", "123456", "qwerty", "password", "abc123", "111111")
 
     fun normalize(username: String) = username.trim().lowercase()
+
+    /** null si la clave sirve; se usa al crear y al cambiar contraseña. */
+    fun validatePassword(password: String, username: String = ""): String? = when {
+        password.length !in 8..128 -> "La contraseña debe tener entre 8 y 128 caracteres."
+        !MAYUS.containsMatchIn(password) || !MINUS.containsMatchIn(password) || !DIGITO.containsMatchIn(password) ->
+            "La contraseña necesita al menos una mayúscula, una minúscula y un número."
+        COMMON.any { it in password.lowercase() } -> "La contraseña contiene un patrón común (1234, qwerty, ...)."
+        username.isNotBlank() && normalize(username) in password.lowercase() -> "La contraseña no puede contener el usuario."
+        else -> null
+    }
 
     /** null si los datos sirven; si no, el motivo para mostrar en pantalla. */
     fun validate(username: String, password: String): String? = when {
         !NAME.matches(normalize(username)) -> "El usuario debe tener 3 a 20 letras, números, punto o guion bajo."
         normalize(username) in RESERVED -> "Ese nombre está reservado para las cuentas del equipo."
-        password.length !in 4..128 -> "La contraseña debe tener entre 4 y 128 caracteres."
-        else -> null
+        else -> validatePassword(password, normalize(username))
     }
 
     /** Devuelve el rol y la credencial "salt:hash" del registro, o null si está corrupto. */

@@ -120,9 +120,14 @@ class LoginActivity : BaseActivity() {
                         busy = false
                         password.text?.clear()
                         if (role != null) {
-                            agro.role = role
-                            startActivity(Intent(this, ConnectionActivity::class.java))
-                            finish()
+                            if (agro.credentials.passwordExpired(user)) {
+                                resetFeedback.setTextColor(red)
+                                resetFeedback.text = "Clave vencida (90 días). Cámbiala más abajo para continuar."
+                            } else {
+                                agro.role = role
+                                startActivity(Intent(this, ConnectionActivity::class.java))
+                                finish()
+                            }
                         } else {
                             feedback.setTextColor(red)
                             feedback.text = "Contraseña incorrecta para $user."
@@ -139,7 +144,7 @@ class LoginActivity : BaseActivity() {
         label("TU PROPIA CUENTA · QUEDA GUARDADA EN ESTE TELÉFONO", 11, muted, true)
         newUser = field("Usuario nuevo")
         newPass = field("Contraseña nueva", password = true)
-        accountFeedback = label("La cuenta usará el perfil elegido arriba (Control o Monitor).", 13, muted)
+        accountFeedback = label("La cuenta usará el perfil elegido arriba. La contraseña necesita 8 caracteres con mayúscula, minúscula y número, sin patrones comunes ni tu usuario.", 13, muted)
         button("Crear cuenta") {
             if (busy) return@button
             busy = true
@@ -169,7 +174,7 @@ class LoginActivity : BaseActivity() {
         chgUser = field("Usuario a cambiar")
         chgAuth = field("Clave actual de esa cuenta o del admin", password = true)
         chgNew = field("Clave nueva", password = true)
-        resetFeedback = label("El dueño cambia su clave con su clave actual; admin puede restablecer la de cualquiera (recuperación).", 13, muted)
+        resetFeedback = label("El dueño cambia su clave con su clave actual; admin puede restablecerla. Máximo 3 claves previas, vigencia de 90 días.", 13, muted)
         button("Guardar nueva clave", secondary = true) {
             if (busy) return@button
             busy = true

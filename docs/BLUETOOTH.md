@@ -18,11 +18,24 @@ Sigue la guía fotográfica oficial de la web (sección «Guía de Montaje Físi
 | LED rojo (+220 Ω) | ánodo | D5 |
 | Módulo relé 5V (Active LOW) | IN | D8 |
 | Bluetooth HC-05 | TXD | D10 |
-| Bluetooth HC-05 | RXD | D11 |
+| Bluetooth HC-05 | RXD | D11 (con divisor 5V→3,3V) |
 
-Sube el sketch oficial de la web tal cual (Arduino IDE: seleccionar
+**Importante:** el RX del HC-05 es de 3,3 V y el TX de Arduino da 5 V. Pon un
+divisor de 1 kΩ (D11 → RX) y 2 kΩ (RX → GND), o un adaptador HC-05 con
+nivelador. Sin eso el módulo puede recibir basura o quemarse. RXD se refiere al
+RX **del HC-05**, que va al pin D10 de Arduino (TX del `SoftwareSerial`).
+
+Sube `firmware/AgroAlert_Uno_HC05.ino` **v1.4** (Arduino IDE: seleccionar
 «Arduino Uno» y el puerto COM; cargar). Los terminales AC del relé quedan
 vacíos, como exige el protocolo de laboratorio.
+
+### Baud del HC-05 (causa del fallo anterior)
+
+Los HC-05 salen de fábrica a **38400** o **9600** según el lote. El sketch v1.3
+estaba fijo en 9600: con un módulo a 38400 el celular conectaba pero nunca
+recibía telemetría. El sketch v1.4 prueba ambos bauds automáticamente: envía
+`?`, la app 1.4 responde `!`, y el Arduino se queda en el baud correcto antes de
+emitir telemetría. No hay que configurar nada a mano.
 
 ## Minuto 15-20: emparejar el HC-05 (UNA sola vez por celular)
 
@@ -59,7 +72,8 @@ nunca vuelve a pedirlo: después de eso, conectar es tocar el HC-05 en la lista.
 | Síntoma | Causa probable | Arreglo |
 |---|---|---|
 | No aparece el HC-05 en la lista | No está emparejado | Emparejar primero en Ajustes › Bluetooth |
-| «No se pudo conectar con el módulo Bluetooth» | El Arduino está apagado u otro equipo lo tiene ocupado | Apagar y encender el Arduino; desvincular de otros celulares |
+| «No se pudo conectar con el HC-05» | El Arduino está apagado u otro equipo lo tiene ocupado | Apagar y encender el Arduino; desvincular de otros celulares |
+| «El HC-05 no envió lecturas: revisa el baud…» | Sketch v1.3 o anterior, o RX sin divisor | Subir el sketch v1.4 y poner el divisor 1 kΩ/2 kΩ en RX |
 | Conecta pero «Sin datos válidos durante 7 segundos» | El sketch no está corriendo | Revisa el monitor serie: debe imprimir la telemetría por USB |
 | «Controles bloqueados · revisa el sensor» | DHT11 suelto | Reconecta el cable de datos en D2 |
 | Permiso de Bluetooth denegado | Android 12+ | Ajustes › Apps › AgroAlert › Permisos › Bluetooth |

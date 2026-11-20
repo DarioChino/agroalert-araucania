@@ -48,6 +48,14 @@ ningún caso y comparten el mismo contador de bloqueo.
 > camino natural es **SQLite con Room** primero y **Firebase** después — está
 > documentado como etapa de escalabilidad.»
 
+### Política de claves vigente
+
+- 8 a 128 caracteres, con mayúscula, minúscula y número.
+- Se rechazan patrones comunes (`1234`, `qwerty`, `password`, `abc123`, `111111`) y que la clave contenga el usuario.
+- Se guardan como hash las últimas **3** claves; ninguna puede reutilizarse.
+- Vigencia de **90 días**: al vencer, el login exige cambiar la clave antes de entrar.
+- Firebase Auth + Firestore sigue siendo la etapa D2 documentada; no se usa en esta entrega.
+
 Puntos fuertes a mencionar si pregunta más: `allowBackup=false` en el manifest
 (los datos no salen en backups), datos personales cero (solo rol), sin nube
 (los datos no abandonan la red local).

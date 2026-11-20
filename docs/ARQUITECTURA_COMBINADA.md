@@ -23,7 +23,8 @@ fusión de código está planificada en la hoja de ruta (§5).
 **Etapa 1 — Prototipo de campo (implantada).** El hardware efectivamente
 disponible y documentado en la [web oficial del proyecto](https://proyecto-iot.momentumspace.cl/)
 es un **Arduino Uno R3 + módulo HC-05**. El HC-05 es un enlace serie
-inalámbrico (perfil Bluetooth SPP, 9600 bps): la app se conecta con el UUID
+inalámbrico (perfil Bluetooth SPP; el firmware v1.4 negocia 38400/9600 bps):
+la app se conecta con el UUID
 estándar del perfil (`00001101-…`) y habla el mismo protocolo del informe,
 trama a trama:
 
@@ -49,7 +50,7 @@ Wi-Fi hacia la nube y la interfaz evoluciona a la app Compose de Sebastián.
 1. **El hardware disponible no tiene Wi-Fi.** El nodo del prototipo es un Uno
    R3, que solo tiene puerto serie. Conectarlo por Wi-Fi era técnicamente
    imposible sin cambiar de placa; el HC-05 convierte ese puerto serie en radio.
-2. **El protocolo no cambió.** Siempre fue serie a 9600 bps con tramas
+2. **El protocolo no cambió.** Siempre fue serie con tramas
    `TELEMETRIA|…`. Solo el medio físico pasó de cable a radio: cero cambios en
    el diseño del informe.
 3. **Wi-Fi sigue vivo en el proyecto.** La app conserva el cliente TCP para el

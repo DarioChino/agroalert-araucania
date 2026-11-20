@@ -22,6 +22,7 @@ object PasswordHash {
         val (salt, hash) = stored.split(':')
         MessageDigest.isEqual(derive(password, Base64.getDecoder().decode(salt)), Base64.getDecoder().decode(hash))
     }.getOrDefault(false)
+    fun matchesAny(password: String, hashes: List<String>): Boolean = hashes.any { verify(password, it) }
 }
 
 data class AttemptState(val failures: Int = 0, val blockedUntil: Long = 0) {
@@ -33,17 +34,27 @@ data class AttemptState(val failures: Int = 0, val blockedUntil: Long = 0) {
 }
 
 class Credentials(context: Context) {
+    companion object { const val PASSWORD_PERIOD_MS = 90L * 24 * 60 * 60 * 1000 }
+
     private val prefs = context.getSharedPreferences("local_credentials", Context.MODE_PRIVATE)
     val configured get() = prefs.contains("control") && prefs.contains("monitor")
+
+    private fun historyKey(key: String) = "hist:$key"
+    private fun changedKey(key: String) = "changed:$key"
 
     init {
         // Cuentas iniciales del equipo, una por rol: admin/admin1 (Control) y
         // monitor/monitor1 (Monitor). Se siembran solo si esta instalación no
         // tiene accesos y quedan guardadas como hash PBKDF2, nunca en texto plano.
-        if (!configured) prefs.edit()
-            .putString("control", PasswordHash.create("admin1"))
-            .putString("monitor", PasswordHash.create("monitor1"))
-            .commit()
+        if (!configured) {
+            val now = System.currentTimeMillis()
+            prefs.edit()
+                .putString("control", PasswordHash.create("admin1"))
+                .putString("monitor", PasswordHash.create("monitor1"))
+                .putLong(changedKey("control"), now)
+                .putLong(changedKey("monitor"), now)
+                .commit()
+        }
     }
 
     private fun state() = AttemptState(prefs.getInt("failures", 0), prefs.getLong("blocked", 0))
@@ -69,8 +80,22 @@ class Credentials(context: Context) {
         LocalAccounts.validate(username, password)?.let { return it }
         val key = "acct:${LocalAccounts.normalize(username)}"
         if (prefs.contains(key)) return "Ese usuario ya existe en este teléfono."
-        prefs.edit().putString(key, "${role.wire}:${PasswordHash.create(password)}").commit()
+        prefs.edit()
+            .putString(key, "${role.wire}:${PasswordHash.create(password)}")
+            .putLong(changedKey(key), System.currentTimeMillis())
+            .commit()
         return null
+    }
+
+    /** Instalaciones anteriores a esta política arrancan el conteo ahora, no obligan a cambiar. */
+    fun passwordExpired(username: String): Boolean {
+        val key = Users.resolve(username)?.wire?.lowercase() ?: "acct:${LocalAccounts.normalize(username)}"
+        val changed = prefs.getLong(changedKey(key), 0L)
+        if (changed == 0L) {
+            prefs.edit().putLong(changedKey(key), System.currentTimeMillis()).apply()
+            return false
+        }
+        return System.currentTimeMillis() - changed >= PASSWORD_PERIOD_MS
     }
 
     /**
@@ -81,19 +106,26 @@ class Credentials(context: Context) {
     fun changePassword(target: String, auth: String, newPassword: String): String? {
         val name = LocalAccounts.normalize(target)
         if (name.isEmpty()) return "Indica el usuario a cambiar."
-        if (newPassword.length !in 4..128 || auth.length > 128) return "Las contraseñas deben tener entre 4 y 128 caracteres."
+        LocalAccounts.validatePassword(newPassword, name)?.let { return it }
+        if (auth.length > 128) return "La clave de autorización es demasiado larga."
         val role = Users.resolve(name)
         val key = role?.wire?.lowercase() ?: "acct:$name"
         val record = prefs.getString(key, null) ?: return "Ese usuario no existe en este teléfono."
-        val selfOk = when (role) {
-            null -> LocalAccounts.decode(record)?.let { PasswordHash.verify(auth, it.second) } ?: false
-            else -> PasswordHash.verify(auth, record)
-        }
-        if (!selfOk && !PasswordHash.verify(auth, prefs.getString("control", "") ?: ""))
+        val currentHash = (if (role == null) LocalAccounts.decode(record)?.second else record)
+            ?: return "El registro de ese usuario está corrupto."
+        if (!PasswordHash.verify(auth, currentHash) &&
+            !PasswordHash.verify(auth, prefs.getString("control", "") ?: ""))
             return "La clave de autorización no coincide: usa la clave actual de esa cuenta o la del usuario admin."
+        val history = prefs.getString(historyKey(key), "")!!.lines().filter { it.contains(':') }
+        if (PasswordHash.matchesAny(newPassword, listOf(currentHash) + history))
+            return "La clave no puede repetir ninguna de las últimas 3."
         val newRecord = if (role != null) PasswordHash.create(newPassword)
             else "${LocalAccounts.decode(record)!!.first.wire}:${PasswordHash.create(newPassword)}"
-        prefs.edit().putString(key, newRecord).commit()
+        prefs.edit()
+            .putString(key, newRecord)
+            .putString(historyKey(key), (history + currentHash).takeLast(3).joinToString("\n"))
+            .putLong(changedKey(key), System.currentTimeMillis())
+            .commit()
         return null
     }
 }

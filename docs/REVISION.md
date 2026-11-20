@@ -47,8 +47,8 @@ Evidencias: [primer inicio del release](evidencias/04_primer_inicio_release.png)
 - **Textos en Kotlin (Lint `SetTextI18n`)**: la app es monolingüe (es-CL) por alcance del proyecto; no se planea traducción.
 - **`commit()` en preferencias**: es intencional. Se ejecuta en hilo de fondo y garantiza que el bloqueo quede guardado antes de responder.
 - **Sin TLS en el TCP del prototipo**: documentado en el README. Las claves por rol y la red local son la barrera actual; no se debe exponer el nodo a Internet.
-- **Sin reconexión automática**: al perder el enlace se vuelve a conectar manualmente. El nodo regresa a modo automático solo.
-- **Sin historial permanente ni notificaciones**: fuera del alcance definido.
+- **Reconexión automática (v1.4)**: tanto Wi-Fi como Bluetooth reintentan hasta 6 veces y sincronizan la cola de órdenes al volver. El nodo regresa a modo automático solo.
+- **Sin notificaciones**: fuera del alcance definido. El historial de claves sí existe: las últimas 3 se guardan como hash para impedir su reutilización.
 - **Icono no adaptativo**: pendiente cosmético; se puede reutilizar el logo en la página web. *(Resuelto el 13-11-2026 con ícono adaptativo de araucaria; ver [ACTUALIZACION_13-11.md](ACTUALIZACION_13-11.md).)*
 
 ## Cómo reproducir

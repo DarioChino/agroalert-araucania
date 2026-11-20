@@ -14,15 +14,22 @@ class CredentialsTest {
         assertNull(Users.resolve(""))
     }
     @Test fun `custom account validation accepts valid names and rejects reserved or malformed`() {
-        assertNull(LocalAccounts.validate("profe.juan_1", "clave123"))
+        assertNull(LocalAccounts.validate("profe.juan_1", "Clave123"))
         assertEquals("profe.juan_1", LocalAccounts.normalize("  Profe.Juan_1 "))
-        assertNotNull(LocalAccounts.validate("ab", "clave123"))
-        assertNotNull(LocalAccounts.validate("a ".repeat(11) + "x", "clave123"))
-        assertNotNull(LocalAccounts.validate("mi cuenta", "clave123"))
-        assertNotNull(LocalAccounts.validate("admin", "clave123"))
-        assertNotNull(LocalAccounts.validate("monitor", "clave123"))
+        assertNotNull(LocalAccounts.validate("ab", "Clave123"))
+        assertNotNull(LocalAccounts.validate("a ".repeat(11) + "x", "Clave123"))
+        assertNotNull(LocalAccounts.validate("mi cuenta", "Clave123"))
+        assertNotNull(LocalAccounts.validate("admin", "Clave123"))
+        assertNotNull(LocalAccounts.validate("monitor", "Clave123"))
         assertNotNull(LocalAccounts.validate("profe", "abc"))
         assertNotNull(LocalAccounts.validate("profe", "x".repeat(129)))
+    }
+    @Test fun `password policy requires eight characters upper lower and digit`() {
+        assertNull(LocalAccounts.validate("profe", "Huerto2026"))
+        assertNotNull(LocalAccounts.validate("profe", "huerto2026"))
+        assertNotNull(LocalAccounts.validate("profe", "HUERTO2026"))
+        assertNotNull(LocalAccounts.validate("profe", "Huertoxzy"))
+        assertNotNull(LocalAccounts.validate("profe", "Hu12345"))
     }
     @Test fun `custom account record roundtrip keeps role and credential`() {
         val parsed = LocalAccounts.decode("MONITOR:c2FsdA==:aGFzaA==")
@@ -54,5 +61,17 @@ class CredentialsTest {
         assertTrue(PasswordHash.verify("clave-ejemplo", one))
         assertFalse(PasswordHash.verify("incorrecta", one))
         assertFalse(PasswordHash.verify("clave-ejemplo", "corrupto"))
+    }
+    @Test fun `common patterns and username are rejected`() {
+        assertNotNull(LocalAccounts.validate("profe", "Qwerty123"))
+        assertNotNull(LocalAccounts.validate("profe", "Abc12345"))
+        assertNotNull(LocalAccounts.validate("profe", "Profe123"))
+        assertNull(LocalAccounts.validate("profe", "Huerto2026"))
+    }
+    @Test fun `history matches only previous hashes`() {
+        val a = PasswordHash.create("Huerto2026")
+        val b = PasswordHash.create("Campo2027")
+        assertTrue(PasswordHash.matchesAny("Huerto2026", listOf(a, b)))
+        assertFalse(PasswordHash.matchesAny("Lluvia2028", listOf(a, b)))
     }
 }

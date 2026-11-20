@@ -22,16 +22,20 @@ class ConnectionActivity : BaseActivity() {
     private lateinit var btStatus: TextView
     private lateinit var btList: LinearLayout
     private var navigating = false
-    private val askBtPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) listBonded() else btStatus.text = "Sin el permiso de Bluetooth no puedo buscar el módulo."
+    private val askBtPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
+        if (granted.values.all { it }) listBonded() else btStatus.text = "Sin permisos de Bluetooth no puedo conectar con el módulo."
     }
+    private fun hasBtPermissions() = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+        (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
+         checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED)
     private val enableBt = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) listBonded() else btStatus.text = "Activa el Bluetooth para buscar el módulo."
     }
     private val observer: (NodeState) -> Unit = { state ->
         status.text = state.message
         connect.isEnabled = !state.connecting
-        if (state.connected && !navigating) {
+        // Entrar solo con la primera lectura válida: si el baud está mal, el error se ve aquí y no en el dashboard.
+        if (state.connected && state.telemetry != null && !navigating) {
             navigating = true
             key.text?.clear()
             startActivity(Intent(this, DashboardActivity::class.java))
@@ -81,9 +85,8 @@ class ConnectionActivity : BaseActivity() {
     private fun listBonded() {
         val adapter = getSystemService(BluetoothManager::class.java)?.adapter
         if (adapter == null) { btStatus.text = "Este celular no tiene Bluetooth."; return }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            askBtPermission.launch(Manifest.permission.BLUETOOTH_CONNECT)
+        if (!hasBtPermissions()) {
+            askBtPermission.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN))
             return
         }
         if (!adapter.isEnabled) {
@@ -109,6 +112,10 @@ class ConnectionActivity : BaseActivity() {
         }
     }
     private fun connectBt(device: BluetoothDevice) {
+        if (!hasBtPermissions()) {
+            askBtPermission.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN))
+            return
+        }
         try { agro.node.connectBluetooth(device, agro.role!!) }
         catch (_: SecurityException) { btStatus.text = "Falta el permiso de Bluetooth; actívalo y vuelve a intentar." }
     }
