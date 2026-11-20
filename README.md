@@ -5,11 +5,11 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 ## Qué está implementado
 
 - APK con cuatro pantallas: acceso, conexión Wi-Fi, monitoreo y control.
-- **Una sola clase de cuenta**: `admin/admin1` es la semilla inicial y cualquier cuenta creada ve y controla todo. Sin perfiles Control/Monitor. Preparación para Firebase en [docs/FIREBASE.md](docs/FIREBASE.md).
+- **Una sola clase de cuenta**: `admin/admin1` es la semilla inicial y cualquier cuenta creada ve y controla todo. Sin perfiles Control/Monitor. Cuentas y claves en Firebase Auth desde la 1.6.0; falta habilitar Email/Password en consola ([docs/FIREBASE.md](docs/FIREBASE.md)).
 - **Conexión Bluetooth directa al Arduino Uno + HC-05** documentado en la web del proyecto, sin servidor local: [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
 - **Arquitectura en dos etapas** que integra el trabajo de ambos integrantes: este repo es la capa de conexión real (Uno+HC-05 hoy, TCP mañana) y el repo de Sebastián Torres define la interfaz Compose y el firmware ESP32+Firebase de la etapa de escalabilidad: [docs/ARQUITECTURA_COMBINADA.md](docs/ARQUITECTURA_COMBINADA.md).
 - **Pantalla «Alertas y riesgos»** (frío, humedad ambiente y suelo) con banner de riesgo crítico en el panel: [docs/HUECOS_FUNCIONALES.md](docs/HUECOS_FUNCIONALES.md).
-- **Bitácora de campo persistente**: la actividad del nodo queda en el teléfono mientras Firebase no esté configurado; con `google-services.json` pasa a Firestore (propuesta de Sebastián Torres, con crédito).
+- **Bitácora de campo persistente**: desde la 1.6.0 la actividad del nodo se guarda en Firestore (`users/{uid}/events`), sin caché local; el modo local queda como respaldo si falta `google-services.json` (propuesta de Sebastián Torres, con crédito).
 - Contraseñas con sal aleatoria y PBKDF2-HMAC-SHA256 (120.000 iteraciones).
 - Bloqueo de ingreso por 60 segundos tras tres intentos fallidos, persistente al cerrar la app.
 - Modo oscuro opcional con botón «Modo oscuro / Modo claro» en cada pantalla, persistente al cerrar la app.
@@ -117,7 +117,7 @@ Android A · cuenta ── TCP/Wi-Fi ─┐
 Android B · cuenta ── TCP/Wi-Fi ─┘        └── Futuro: puente Wi-Fi ↔ Arduino
 ```
 
-Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicación directa teléfono-a-teléfono. Firebase Auth/Firestore está preparado pero inactivo hasta que exista `app/google-services.json`; ver [docs/FIREBASE.md](docs/FIREBASE.md).
+Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicación directa teléfono-a-teléfono. Desde la 1.6.0 Firebase Auth/Firestore está activo en el proyecto `agroalert-5a4ad`; falta habilitar Email/Password en consola para que el acceso funcione; ver [docs/FIREBASE.md](docs/FIREBASE.md).
 
 | Archivo | Responsabilidad |
 |---|---|
@@ -142,7 +142,7 @@ Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicació
 - [Mapa de cableado del Uno + HC-05 y compilación del firmware](docs/CABLEADO_ARDUINO.md).
 - [Rúbrica U3: evidencia por criterio y guion de demo](docs/RUBRICA_DEMO.md).
 - [Dónde y cómo guarda los datos la app (respuesta al docente)](docs/ARQUITECTURA_DATOS.md).
-- [Firebase listo para activar: pasos, reglas y límites](docs/FIREBASE.md).
+- [Firebase activo: estado del proyecto, reglas y paso pendiente en consola](docs/FIREBASE.md).
 - [Probar el Bluetooth sin Arduino, con dos celulares](docs/SIMULADOR_BLUETOOTH.md).
 - [Huecos funcionales y ampliaciones pendientes](docs/HUECOS_FUNCIONALES.md): avisos de riesgo crítico, humedad de suelo y más control sobre el huerto.
 
@@ -154,8 +154,8 @@ y se visualiza en **https://dariochino.github.io/agroalert-web/**, junto con la
 descarga del APK.
 
 El `.gitignore` excluye `build/`, `local.properties`, `keystore/`,
-`simulator/credentials.json`, `app/google-services.json` y `entregables/`:
-la clave de firma, la configuración de Firebase y las claves del nodo **nunca** se publican. Para subir cambios futuros:
+`simulator/credentials.json`, `app/google-services.json`, `ClaveFirebase/` y `entregables/`:
+la clave de firma, la configuración de Firebase, la clave de cuenta de servicio y las claves del nodo **nunca** se publican. Para subir cambios futuros:
 
 ```powershell
 git add .
@@ -172,13 +172,14 @@ entrega con otra:
 
 | Versión | Tag | Qué agrega |
 |---|---|---|
+| 1.6.0 | `v1.6.0` | Firebase Auth/Firestore activo en `agroalert-5a4ad`, bitácora y claves en la nube sin caché local, reglas por uid publicadas |
 | 1.5.0 | `v1.5.0` | Cuenta única sin roles, política de claves reconectada, Firebase Auth/Firestore preparado pero inactivo, corrección v1.4 de Bluetooth |
 | 1.1.0 | `v1.1.0` | Conexión Bluetooth SPP directa al Arduino + HC-05, login con tarjetas de perfil, modo BT activable desde la app, `attack.py` de seguridad, guía de demo en 30 minutos |
 | 1.0.0 | `v1.0.0` | Cuatro pantallas, TCP/Wi-Fi al simulador, PBKDF2, bloqueo, modo oscuro, ícono adaptativo |
 
 ## Alcance del prototipo
 
-La implementación aplica prácticas relacionadas con ISO/IEC 27400; **no implica certificación ni cumplimiento integral de la norma**. Las contraseñas locales se almacenan transformadas, pero el TCP del prototipo no utiliza TLS: las claves de acceso al nodo y la telemetría no tienen cifrado de extremo a extremo. WPA2/WPA3 protege el enlace inalámbrico y no sustituye TLS. El inicio de sesión (local hoy, Firebase Auth cuando se active) es la barrera de la app; el nodo aplica la autorización efectiva mediante su token, que la app envía siempre como `CONTROL` por compatibilidad con el prototipo.
+La implementación aplica prácticas relacionadas con ISO/IEC 27400; **no implica certificación ni cumplimiento integral de la norma**. Las contraseñas locales se almacenan transformadas, pero el TCP del prototipo no utiliza TLS: las claves de acceso al nodo y la telemetría no tienen cifrado de extremo a extremo. WPA2/WPA3 protege el enlace inalámbrico y no sustituye TLS. El inicio de sesión lo gestiona Firebase Auth (1.6.0) y es la barrera de la app; el nodo aplica la autorización efectiva mediante su token, que la app envía siempre como `CONTROL` por compatibilidad con el prototipo.
 
 El monitoreo está orientado al uso con la app abierta. No incluye servicio de alarmas en segundo plano, notificaciones push, almacenamiento histórico permanente ni acceso desde Internet. Wi-Fi amplía la cobertura respecto del montaje Bluetooth, pero depende del alcance y conectividad de la red instalada.
 
