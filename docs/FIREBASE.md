@@ -81,12 +81,12 @@ $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 .\gradlew.bat :app:testDebugUnitTest :app:assembleDebug :app:lintDebug :app:assembleRelease
 ```
 
-La huella del release 1.7.0 es
-`0713C5F809CE192BF1323BF05BC6A339FA5E9C220F8363F41C967E4E08EFE652`.
+La huella del release 1.8.0 es
+`F5C1C8375D8B1388AC5FAAEDFE0EB091CEA279D9180DCF53E798D188E5D7FA34`.
 
 ## Qué se guarda en cada modo
 
-| Dato | Sin JSON (modo local) | Con JSON (1.7.0, actual) |
+| Dato | Sin JSON (modo local) | Con JSON (1.8.0, actual) |
 |---|---|---|
 | Acceso | Hash PBKDF2 en `local_credentials.xml` | Firebase Auth; hash e historial en `users/{uid}` de Firestore |
 | Correo de recuperación | No existe | `users/{uid}.email` en Firestore; el enlace lo envía Firebase Auth |

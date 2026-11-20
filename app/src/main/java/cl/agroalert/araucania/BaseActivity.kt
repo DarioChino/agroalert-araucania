@@ -13,9 +13,11 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
@@ -72,6 +74,36 @@ abstract class BaseActivity : AppCompatActivity() {
         parent.addView(View(this), LinearLayout.LayoutParams(1, dp(height)))
     }
 
+    /** Sección oculta hasta que su pestaña la selecciona. */
+    protected fun panel(): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        visibility = View.GONE
+        content.addView(this, LinearLayout.LayoutParams(-1, -2))
+    }
+
+    /** Barra de pestañas; con iconos, [labels] se usa como descripción accesible. */
+    protected fun tabBar(labels: List<String>, icons: List<Int> = emptyList(), onSelect: (Int) -> Unit): TabLayout {
+        return TabLayout(this).apply {
+            tabMode = TabLayout.MODE_FIXED
+            tabGravity = TabLayout.GRAVITY_FILL
+            labels.forEachIndexed { i, text ->
+                newTab().also { tab ->
+                    if (icons.isEmpty()) tab.text = text else {
+                        tab.icon = AppCompatResources.getDrawable(this@BaseActivity, icons[i])
+                        tab.setContentDescription(text)
+                    }
+                    addTab(tab)
+                }
+            }
+            addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab) { onSelect(tab.position) }
+                override fun onTabUnselected(tab: TabLayout.Tab) = Unit
+                override fun onTabReselected(tab: TabLayout.Tab) = Unit
+            })
+            content.addView(this, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+        }
+    }
+
     protected fun card(parent: LinearLayout = content): LinearLayout {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -86,7 +118,7 @@ abstract class BaseActivity : AppCompatActivity() {
         return box
     }
 
-    protected fun field(hint: String, password: Boolean = false, initial: String = "", numeric: Boolean = false, email: Boolean = false): TextInputEditText {
+    protected fun field(hint: String, password: Boolean = false, initial: String = "", numeric: Boolean = false, email: Boolean = false, parent: LinearLayout = content): TextInputEditText {
         val box = TextInputLayout(this).apply {
             this.hint = hint
             boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
@@ -106,7 +138,7 @@ abstract class BaseActivity : AppCompatActivity() {
             if (password) importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
         }
         box.addView(input, LinearLayout.LayoutParams(-1, -2))
-        content.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) })
+        parent.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) })
         return input
     }
 

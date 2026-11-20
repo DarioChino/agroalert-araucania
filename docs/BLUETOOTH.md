@@ -37,6 +37,12 @@ recibía telemetría. El sketch v1.4 prueba ambos bauds automáticamente: envía
 `?`, la app 1.4 responde `!`, y el Arduino se queda en el baud correcto antes de
 emitir telemetría. No hay que configurar nada a mano.
 
+**Corregido el 2026-11-20:** el sketch enviaba el `?` sin salto de línea y la
+app solo procesa líneas terminadas en `\n` (`NodeConnection.kt`), así que el
+`!` nunca volvía al Arduino: después de 6 intentos se fijaba en 9600 aunque el
+HC-05 estuviera a 38400. Vuelve a cargar el sketch v1.4 actualizado y usa la
+app 1.8.0 o superior en el celular.
+
 ## Minuto 15-20: emparejar el HC-05 (UNA sola vez por celular)
 
 1. Con el Arduino alimentado por USB, el LED del HC-05 parpadea rápido.

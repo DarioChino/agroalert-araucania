@@ -172,6 +172,7 @@ entrega con otra:
 
 | Versión | Tag | Qué agrega |
 |---|---|---|
+| 1.8.0 | `v1.8.0` | Pestañas para ingreso/registro/recuperación/cambio de clave, selector Bluetooth/Wi-Fi, pestaña de notas en el panel y corrección del handshake de baud del HC-05 |
 | 1.7.0 | `v1.7.0` | Creación de cuenta con correo real, recuperación por enlace de Firebase, bloqueo progresivo por intentos y protección contra enumeración de correos |
 | 1.6.0 | `v1.6.0` | Firebase Auth/Firestore activo en `agroalert-5a4ad`, bitácora y claves en la nube sin caché local, reglas por uid publicadas |
 | 1.5.0 | `v1.5.0` | Cuenta única sin roles, política de claves reconectada, Firebase Auth/Firestore preparado pero inactivo, corrección v1.4 de Bluetooth |

@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,6 +22,8 @@ class ConnectionActivity : BaseActivity() {
     private lateinit var key: TextInputEditText
     private lateinit var btStatus: TextView
     private lateinit var btList: LinearLayout
+    private lateinit var btPanel: LinearLayout
+    private lateinit var wifiPanel: LinearLayout
     private var navigating = false
     private val askBtPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
         if (granted.values.all { it }) listBonded() else btStatus.text = "Sin permisos de Bluetooth no puedo conectar con el módulo."
@@ -32,8 +35,11 @@ class ConnectionActivity : BaseActivity() {
         if (result.resultCode == RESULT_OK) listBonded() else btStatus.text = "Activa el Bluetooth para buscar el módulo."
     }
     private val observer: (NodeState) -> Unit = { state ->
-        status.text = state.message
-        connect.isEnabled = !state.connecting
+        if (::status.isInitialized) {
+            status.text = state.message
+            connect.isEnabled = !state.connecting
+        }
+        if (::btStatus.isInitialized) btStatus.text = state.message
         // Entrar solo con la primera lectura válida: si el baud está mal, el error se ve aquí y no en el dashboard.
         if (state.connected && state.telemetry != null && !navigating) {
             navigating = true
@@ -45,25 +51,30 @@ class ConnectionActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         if (!requireSession()) return
         val prefs = getSharedPreferences("connection", MODE_PRIVATE)
-        page("01 / Conexión", "Enlaza tu nodo.", "Conecta por Bluetooth con el Arduino (HC-05) o por Wi-Fi con el nodo de red y el simulador.")
-        label("BLUETOOTH · ARDUINO + HC-05", 11, muted, true)
-        btStatus = label("Enciende el Arduino y tócalo en la lista. El PIN del HC-05 se pide UNA sola vez al vincular, en Ajustes de Android, nunca aquí.", 13, muted)
-        button("Buscar módulos emparejados") { listBonded() }
+        page("01 / Conexión", "Enlaza tu nodo.", "Elige Bluetooth (Arduino + HC-05) o Wi-Fi (nodo o simulador) con los iconos de arriba.")
+        tabBar(listOf("Bluetooth", "Wi-Fi"), listOf(R.drawable.ic_bluetooth, R.drawable.ic_wifi)) { select(it) }
+        btPanel = panel()
+        wifiPanel = panel()
+
+        label("BLUETOOTH · ARDUINO + HC-05", 11, muted, true, btPanel)
+        label("Enciende el Arduino. El PIN del HC-05 se pide UNA sola vez al vincular, en Ajustes de Android, nunca aquí.", 13, muted, parent = btPanel)
+        btStatus = label("Listo para conectar por Bluetooth", 13, muted, parent = btPanel)
+        button("Buscar módulos emparejados", parent = btPanel) { listBonded() }
         btList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        content.addView(btList, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) })
-        gap(10)
-        val info = card()
+        btPanel.addView(btList, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) })
+
+        val info = card(wifiPanel)
         label("Wi-Fi · red local (simulador o nodo)", 18, ink, true, info)
         gap(8, info)
         label("Cada celular abre su propia conexión. Ambos reciben el mismo estado del sistema.", 14, muted, parent = info)
-        val host = field("Dirección IP del nodo", initial = prefs.getString("host", "") ?: "")
-        val port = field("Puerto TCP", initial = prefs.getInt("port", 5000).toString(), numeric = true)
-        key = field("Clave del nodo (CLAVE_CONTROL del simulador)", password = true)
-        label("Esta clave la entrega el nodo o el simulador. Es diferente de tu contraseña de inicio de sesión.", 13, muted)
-        gap()
-        status = label("Listo para conectar", 14, green)
-        gap()
-        connect = button("Conectar por Wi-Fi") {
+        val host = field("Dirección IP del nodo", initial = prefs.getString("host", "") ?: "", parent = wifiPanel)
+        val port = field("Puerto TCP", initial = prefs.getInt("port", 5000).toString(), numeric = true, parent = wifiPanel)
+        key = field("Clave del nodo (CLAVE_CONTROL del simulador)", password = true, parent = wifiPanel)
+        label("Esta clave la entrega el nodo o el simulador. Es diferente de tu contraseña de inicio de sesión.", 13, muted, parent = wifiPanel)
+        gap(parent = wifiPanel)
+        status = label("Listo para conectar", 14, green, parent = wifiPanel)
+        gap(parent = wifiPanel)
+        connect = button("Conectar por Wi-Fi", parent = wifiPanel) {
             val address = (host.text?.toString() ?: "").trim()
             val p = port.text?.toString()?.toIntOrNull()
             val token = (key.text?.toString() ?: "").trim()
@@ -79,8 +90,13 @@ class ConnectionActivity : BaseActivity() {
         }
         button("Cerrar sesión", secondary = true) { logout() }
         button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true) { toggleDarkMode() }
-        gap(16)
-        label("¿Estás probando sin Arduino?\nInicia simulator/server.py en el computador y usa la IP y la clave que muestra la terminal.", 13, muted)
+        gap(16, wifiPanel)
+        label("¿Estás probando sin Arduino?\nInicia simulator/server.py en el computador y usa la IP y la clave que muestra la terminal.", 13, muted, parent = wifiPanel)
+        btPanel.visibility = View.VISIBLE
+    }
+    private fun select(index: Int) {
+        btPanel.visibility = if (index == 0) View.VISIBLE else View.GONE
+        wifiPanel.visibility = if (index == 1) View.VISIBLE else View.GONE
     }
     private fun listBonded() {
         val adapter = getSystemService(BluetoothManager::class.java)?.adapter

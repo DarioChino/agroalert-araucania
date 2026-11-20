@@ -10,6 +10,7 @@
  *    la app confirma con '!'. Antes estaba fijo en 9600 y, con modulos que
  *    vienen a 38400, el celular nunca recibia telemetria valida.
  *  - No transmite telemetria hasta confirmar el baud (evita tramas basura).
+  *  - v1.4 revisado: el '?' lleva \n; sin él la app no responde '!'.
  *
  *  VERSION 1.3 (corregida tras retroalimentacion del docente):
  *  - Fail-safe de sensor: sensorValido parte en false; si el DHT11 no
@@ -97,7 +98,7 @@ void negociarBaud() {
   baudIndex = (baudIndex + 1) % NUM_BAUDS;
   bluetooth.end();
   bluetooth.begin(BAUDS[baudIndex]);
-  bluetooth.print('?');
+  bluetooth.print(F("?\n")); // la app solo lee líneas completas: sin \n nunca responde '!'
 }
 
 void loop() {

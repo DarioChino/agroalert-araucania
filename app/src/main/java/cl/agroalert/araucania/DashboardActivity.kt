@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import java.util.Locale
@@ -20,6 +22,8 @@ class DashboardActivity : BaseActivity() {
     private lateinit var banner: TextView
     private lateinit var events: TextView
     private lateinit var history: TextView
+    private lateinit var panelView: LinearLayout
+    private lateinit var notasView: LinearLayout
     private val handler = Handler(Looper.getMainLooper())
     private val observer: (NodeState) -> Unit = { render(it) }
     private val clock = object : Runnable {
@@ -30,46 +34,60 @@ class DashboardActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         if (!requireSession()) return
         page("02 / Panel", "Estado del huerto", "Una vista clara para anticiparte al frío.")
-        source = label("", 12, amber, true)
-        connection = label("", 14, green, true)
-        age = label("Esperando la primera lectura…", 12, muted)
-        banner = label("", 14, amber, true)
-        banner.visibility = android.view.View.GONE
-        gap()
-        val climate = card()
+        tabBar(listOf("Panel", "Notas")) { i ->
+            panelView.visibility = if (i == 0) View.VISIBLE else View.GONE
+            notasView.visibility = if (i == 1) View.VISIBLE else View.GONE
+        }
+        val panel = panel().also { panelView = it }
+        val notas = panel().also { notasView = it }
+
+        source = label("", 12, amber, true, panel)
+        connection = label("", 14, green, true, panel)
+        age = label("Esperando la primera lectura…", 12, muted, parent = panel)
+        banner = label("", 14, amber, true, panel)
+        banner.visibility = View.GONE
+        gap(parent = panel)
+        val climate = card(panel)
         label("TEMPERATURA AMBIENTAL", 11, muted, true, climate)
         temperature = label("— °C", 48, ink, true, climate)
         humidity = label("Humedad relativa  — %", 18, muted, parent = climate)
         gap(12, climate)
         risk = label("Sin lectura", 18, muted, true, climate)
-        val irrigation = card()
+        val irrigation = card(panel)
         label("SISTEMA DE RIEGO", 11, muted, true, irrigation)
         gap(8, irrigation)
         relay = label("Esperando estado del nodo", 19, ink, true, irrigation)
-        label("El estado mostrado corresponde al relé; el prototipo no mide caudal de agua.", 12, muted, parent = irrigation)
-        val limits = card()
-        label("Umbrales del proyecto", 15, ink, true, limits)
-        gap(8, limits)
-        label("● Normal · sobre 10 °C", 14, green, parent = limits)
-        label("● Prehelada · entre 5 y 10 °C", 14, amber, parent = limits)
-        label("● Riesgo crítico · 5 °C o menos", 14, red, parent = limits)
-        button("Alertas y riesgos") { startActivity(Intent(this, AlertsActivity::class.java)) }
-        button("Controlar el riego") { startActivity(Intent(this, ControlActivity::class.java)) }
-        button("Cambiar conexión", secondary = true) { disconnectAndReturn() }
-        button("Cerrar sesión", secondary = true) { logout() }
-        button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true) { toggleDarkMode() }
-        gap()
-        label("ACTIVIDAD DE ESTA SESIÓN", 11, muted, true)
-        gap(8)
-        events = label("", 13, muted)
-        gap(14)
-        label("BITÁCORA DE CAMPO · PERSISTENTE", 11, muted, true)
-        gap(8)
-        history = label("", 13, muted)
+        button("Alertas y riesgos", parent = panel) { startActivity(Intent(this, AlertsActivity::class.java)) }
+        button("Controlar el riego", parent = panel) { startActivity(Intent(this, ControlActivity::class.java)) }
+        button("Cambiar conexión", secondary = true, parent = panel) { disconnectAndReturn() }
+        button("Cerrar sesión", secondary = true, parent = panel) { logout() }
+        button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true, parent = panel) { toggleDarkMode() }
+        gap(parent = panel)
+        label("ACTIVIDAD DE ESTA SESIÓN", 11, muted, true, panel)
+        gap(8, panel)
+        events = label("", 13, muted, parent = panel)
+        gap(14, panel)
+        label("BITÁCORA DE CAMPO · PERSISTENTE", 11, muted, true, panel)
+        gap(8, panel)
+        history = label("", 13, muted, parent = panel)
+
+        val notasCard = card(notas)
+        label("SOBRE ESTE PANEL", 11, muted, true, notasCard)
+        gap(8, notasCard)
+        label("El estado mostrado corresponde al relé; el prototipo no mide caudal de agua.", 14, muted, parent = notasCard)
+        gap(12, notasCard)
+        label("Umbrales del proyecto", 15, ink, true, notasCard)
+        gap(8, notasCard)
+        label("● Normal · sobre 10 °C", 14, green, parent = notasCard)
+        label("● Prehelada · entre 5 y 10 °C", 14, amber, parent = notasCard)
+        label("● Riesgo crítico · 5 °C o menos", 14, red, parent = notasCard)
+        gap(12, notasCard)
         label(if (BuildConfig.CLOUD_ENABLED)
-            "Estos eventos quedan guardados en Firebase, no en el teléfono. Bitácora basada en la propuesta de Sebastián Torres."
-        else "Estos eventos quedan guardados en el teléfono aunque cierres la app. Bitácora basada en la propuesta de Sebastián Torres.",
-            12, muted)
+            "Los eventos quedan guardados en Firebase, no en el teléfono. Bitácora basada en la propuesta de Sebastián Torres."
+        else "Los eventos quedan guardados en el teléfono aunque cierres la app. Bitácora basada en la propuesta de Sebastián Torres.",
+            13, muted, parent = notasCard)
+        panel.visibility = View.VISIBLE
+
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { disconnectAndReturn() }
         })
@@ -109,7 +127,7 @@ class DashboardActivity : BaseActivity() {
             else -> ""
         }
         banner.setTextColor(if (Nivel.CRITICO in levels) red else amber)
-        banner.visibility = if (banner.text.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE
+        banner.visibility = if (banner.text.isEmpty()) View.GONE else View.VISIBLE
     }
     override fun onStart() { super.onStart(); if (::events.isInitialized) { agro.node.observe(observer); handler.post(clock) } }
     override fun onStop() { agro.node.remove(observer); handler.removeCallbacks(clock); super.onStop() }

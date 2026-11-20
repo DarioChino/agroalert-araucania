@@ -4,8 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputEditText
 
 class LoginActivity : BaseActivity() {
@@ -21,9 +24,14 @@ class LoginActivity : BaseActivity() {
     private lateinit var chgUser: TextInputEditText
     private lateinit var chgAuth: TextInputEditText
     private lateinit var chgNew: TextInputEditText
-    private lateinit var resetFeedback: TextView
+    private lateinit var changeFeedback: TextView
     private lateinit var recoverEmail: TextInputEditText
     private lateinit var recoverFeedback: TextView
+    private lateinit var tabs: TabLayout
+    private lateinit var entrarPanel: LinearLayout
+    private lateinit var crearPanel: LinearLayout
+    private lateinit var recuperarPanel: LinearLayout
+    private lateinit var cambiarPanel: LinearLayout
     private var busy = false
     private val timer = object : Runnable {
         override fun run() {
@@ -53,12 +61,20 @@ class LoginActivity : BaseActivity() {
         gap(4, intro)
         label("Temperatura, humedad y riego, desde tu bolsillo.", 15, muted, parent = intro)
 
-        label("ACCESO ÚNICO", 11, muted, true)
-        userName = field("Usuario o correo (admin: admin)")
-        password = field("Contraseña", password = true)
-        feedback = label("3 intentos fallidos bloquean el ingreso; la espera crece en cada ronda.", 13, muted)
-        gap()
-        submit = button("Entrar") {
+        tabs = tabBar(listOf("Ingresar", "Crear cuenta", "Recuperar", "Cambiar clave")) {
+            selectTab(it, entrarPanel, crearPanel, recuperarPanel, cambiarPanel)
+        }
+        val entrar = panel().also { entrarPanel = it }
+        val crear = panel().also { crearPanel = it }
+        val recuperar = panel().also { recuperarPanel = it }
+        val cambiar = panel().also { cambiarPanel = it }
+
+        label("ACCESO ÚNICO", 11, muted, true, entrar)
+        userName = field("Usuario o correo (admin: admin)", parent = entrar)
+        password = field("Contraseña", password = true, parent = entrar)
+        feedback = label("3 intentos fallidos bloquean el ingreso; la espera crece en cada ronda.", 13, muted, parent = entrar)
+        gap(parent = entrar)
+        submit = button("Entrar", parent = entrar) {
             if (busy) return@button
             busy = true; submit.isEnabled = false
             val user = userName.text?.toString()?.trim().orEmpty().ifEmpty { "admin" }
@@ -71,8 +87,8 @@ class LoginActivity : BaseActivity() {
                         password.text?.clear()
                         if (ok) {
                             if (agro.credentials.passwordExpired(user)) {
-                                resetFeedback.setTextColor(red)
-                                resetFeedback.text = "La clave debe cambiarse antes de continuar (vigencia o política de claves)."
+                                feedback.setTextColor(red)
+                                feedback.text = "La clave debe cambiarse antes de continuar (vigencia o política de claves)."
                             } else {
                                 agro.loggedIn = true
                                 startActivity(Intent(this, ConnectionActivity::class.java))
@@ -87,19 +103,24 @@ class LoginActivity : BaseActivity() {
                 }
             }.start()
         }
-        gap(18)
-        label("CLAVE INICIAL · admin: admin1", 13, muted)
+        gap(18, entrar)
+        label("CLAVE INICIAL · admin: admin1", 13, muted, parent = entrar)
         label(if (BuildConfig.CLOUD_ENABLED)
             "Las cuentas, claves y la bitácora se guardan en Firebase."
         else "Firebase aún no está configurado: por ahora las claves quedan en este teléfono como hash PBKDF2.",
-            12, muted)
-        gap(18)
-        label("TU PROPIA CUENTA · ACCESO COMPLETO", 11, muted, true)
-        newUser = field("Usuario nuevo")
-        newPass = field("Contraseña nueva", password = true)
-        newEmail = field("Correo real (para recuperar la clave)", email = true)
-        accountFeedback = label("8 caracteres con mayúscula, minúscula y número, sin patrones comunes ni tu usuario. El correo debe ser real: allí llegará el enlace de recuperación.", 13, muted)
-        button("Crear cuenta") {
+            12, muted, parent = entrar)
+        gap(18, entrar)
+        label("ENLACES RÁPIDOS", 11, muted, true, entrar)
+        button("Crear cuenta", secondary = true, parent = entrar) { tabs.getTabAt(1)?.select() }
+        button("Olvidé mi clave", secondary = true, parent = entrar) { tabs.getTabAt(2)?.select() }
+        button("Cambiar clave", secondary = true, parent = entrar) { tabs.getTabAt(3)?.select() }
+
+        label("TU PROPIA CUENTA · ACCESO COMPLETO", 11, muted, true, crear)
+        newUser = field("Usuario nuevo", parent = crear)
+        newPass = field("Contraseña nueva", password = true, parent = crear)
+        newEmail = field("Correo real (para recuperar la clave)", email = true, parent = crear)
+        accountFeedback = label("8 caracteres con mayúscula, minúscula y número, sin patrones comunes ni tu usuario. El correo debe ser real: allí llegará el enlace de recuperación.", 13, muted, parent = crear)
+        button("Crear cuenta", parent = crear) {
             if (busy) return@button
             busy = true
             accountFeedback.setTextColor(muted)
@@ -124,42 +145,11 @@ class LoginActivity : BaseActivity() {
                 }
             }.start()
         }
-        gap(18)
-        label("CAMBIAR CONTRASEÑA", 11, muted, true)
-        chgUser = field("Usuario a cambiar")
-        chgAuth = field("Clave actual", password = true)
-        chgNew = field("Clave nueva", password = true)
-        resetFeedback = label("El dueño cambia su clave con su clave actual. Máximo 3 claves previas, vigencia de 90 días.", 13, muted)
-        button("Guardar nueva clave", secondary = true) {
-            if (busy) return@button
-            busy = true
-            resetFeedback.setTextColor(muted)
-            resetFeedback.text = "Guardando…"
-            val user = chgUser.text?.toString() ?: ""
-            val auth = chgAuth.text?.toString() ?: ""
-            val next = chgNew.text?.toString() ?: ""
-            Thread {
-                val problem = agro.credentials.changePassword(user, auth, next)
-                runOnUiThread {
-                    busy = false
-                    if (!isDestroyed) {
-                        if (problem == null) {
-                            chgUser.text?.clear(); chgAuth.text?.clear(); chgNew.text?.clear()
-                            resetFeedback.setTextColor(green)
-                            resetFeedback.text = "Clave actualizada para ${LocalAccounts.normalize(user)}."
-                        } else {
-                            resetFeedback.setTextColor(red)
-                            resetFeedback.text = problem
-                        }
-                    }
-                }
-            }.start()
-        }
-        gap(18)
-        label("RECUPERAR CONTRASEÑA", 11, muted, true)
-        recoverEmail = field("Correo registrado al crear la cuenta", email = true)
-        recoverFeedback = label("Firebase envía un enlace para elegir una clave nueva. Las cuentas antiguas sin correo no pueden recuperarse por aquí.", 13, muted)
-        button("Enviar enlace de recuperación", secondary = true) {
+
+        label("RECUPERAR CONTRASEÑA", 11, muted, true, recuperar)
+        recoverEmail = field("Correo registrado al crear la cuenta", email = true, parent = recuperar)
+        recoverFeedback = label("Firebase envía un enlace para elegir una clave nueva. Las cuentas antiguas sin correo no pueden recuperarse por aquí.", 13, muted, parent = recuperar)
+        button("Enviar enlace de recuperación", secondary = true, parent = recuperar) {
             if (busy) return@button
             busy = true
             recoverFeedback.setTextColor(muted)
@@ -182,9 +172,46 @@ class LoginActivity : BaseActivity() {
                 }
             }.start()
         }
+
+        label("CAMBIAR CONTRASEÑA", 11, muted, true, cambiar)
+        chgUser = field("Usuario a cambiar", parent = cambiar)
+        chgAuth = field("Clave actual", password = true, parent = cambiar)
+        chgNew = field("Clave nueva", password = true, parent = cambiar)
+        changeFeedback = label("El dueño cambia su clave con su clave actual. Máximo 3 claves previas, vigencia de 90 días.", 13, muted, parent = cambiar)
+        button("Guardar nueva clave", secondary = true, parent = cambiar) {
+            if (busy) return@button
+            busy = true
+            changeFeedback.setTextColor(muted)
+            changeFeedback.text = "Guardando…"
+            val user = chgUser.text?.toString() ?: ""
+            val auth = chgAuth.text?.toString() ?: ""
+            val next = chgNew.text?.toString() ?: ""
+            Thread {
+                val problem = agro.credentials.changePassword(user, auth, next)
+                runOnUiThread {
+                    busy = false
+                    if (!isDestroyed) {
+                        if (problem == null) {
+                            chgUser.text?.clear(); chgAuth.text?.clear(); chgNew.text?.clear()
+                            changeFeedback.setTextColor(green)
+                            changeFeedback.text = "Clave actualizada para ${LocalAccounts.normalize(user)}."
+                        } else {
+                            changeFeedback.setTextColor(red)
+                            changeFeedback.text = problem
+                        }
+                    }
+                }
+            }.start()
+        }
+
         gap(14)
         button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true) { toggleDarkMode() }
         gap(10)
         label("PROYECTO TI3042 · INACAP\nDarío Candia & Sebastián Torres", 12, muted)
+        entrar.visibility = View.VISIBLE
+    }
+
+    private fun selectTab(index: Int, vararg panels: LinearLayout) {
+        panels.forEachIndexed { i, p -> p.visibility = if (i == index) View.VISIBLE else View.GONE }
     }
 }
