@@ -28,8 +28,8 @@ guarda la credencial y Firestore el hash de política. Cada dueño cambia su cla
 con su clave actual; no hay «admin» con privilegios de recuperación. La semilla
 `admin/admin1` se conserva para la demo.
 
-**Pendiente:** habilitar *Correo electrónico/contraseña* en la consola de Auth;
-sin eso el acceso responde `CONFIGURATION_NOT_FOUND`. Ver
+*Correo electrónico/contraseña* está habilitado y verificado en Auth (registro,
+ingreso y limpieza de un usuario de prueba dieron 200). Ver
 [docs/FIREBASE.md](FIREBASE.md).
 
 ## 2. Respuesta lista para el docente (30 segundos)
@@ -42,8 +42,8 @@ sin eso el acceso responde `CONFIGURATION_NOT_FOUND`. Ver
 > y todas ven y controlan el nodo. Las claves nunca van en texto plano: van con
 > **PBKDF2 con sal** (120.000 iteraciones) y comparación en tiempo constante. La
 > telemetría ni siquiera se persiste: es de solo lectura y caduca a los 7
-> segundos. Falta activar Email/Password en la consola para que el acceso
-> funcione; los pasos están en `docs/FIREBASE.md».`
+> segundos. Email/Password está habilitado y verificado en Auth; los pasos y
+> límites están en `docs/FIREBASE.md».`
 
 ### Política de claves vigente
 
@@ -76,7 +76,7 @@ administrado:
 | Paso | Alcance | Estado |
 |---|---|---|
 | D1 | Bitácora en Room/SQLite local | No necesario: Firestore cubre la persistencia |
-| D2 | **Firebase Auth + Firestore**: registro propio, bitácora por usuario, reglas por uid | **Hecho en 1.6.0** (falta activar Email/Password en consola) |
+| D2 | **Firebase Auth + Firestore**: registro propio, bitácora por usuario, reglas por uid | **Hecho y verificado en 1.6.0** |
 | D3 | Cifrado TLS extremo a extremo con el módulo Wi-Fi/ESP32 (Ruta A de `INTEGRACION_ARDUINO.md`) | Alto, con hardware |
 
 La telemetría y el control del nodo siguen siendo locales: Firebase solo guarda

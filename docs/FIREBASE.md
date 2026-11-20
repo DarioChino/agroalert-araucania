@@ -16,29 +16,29 @@ bitácora se guardan en Firebase»* y `BuildConfig.CLOUD_ENABLED == true`.
 | App Android | `1:634218768904:android:2b74224553d420250fbfbd`, paquete `cl.agroalert.araucania` |
 | Firestore | Nativo, `southamerica-west1` |
 | Reglas | [`firestore.rules`](../firestore.rules) publicadas en `projects/agroalert-5a4ad/releases/cloud.firestore` |
-| Authentication | Requiere activar **Correo electrónico/contraseña** en la consola (ver abajo) |
+| Authentication | **Correo electrónico/contraseña habilitado** y verificado: registro, ingreso y borrado de un usuario de prueba dieron 200 |
 
 Las reglas limitan cada usuario a su propio documento `users/{uid}` y a las
 subcolecciones `events` y `commands`, usando `request.auth.uid`.
 
-## Paso pendiente: habilitar Email/Password
+## Email/Password: habilitado y verificado
 
-La API pública de Identity Platform solo permite inicializar Auth mediante
-`identityPlatform:initializeAuth`, que **upgradea el proyecto a Identity Platform**
-y cambia la facturación (Spark: 3.000 DAU; Blaze: 50.000 MAU gratis y luego pago).
-Por eso no se ejecutó automáticamente. Sin este paso, el acceso responde
-`CONFIGURATION_NOT_FOUND`.
+Se activó **Correo electrónico/contraseña** en
+<https://console.firebase.google.com/project/agroalert-5a4ad/authentication/users>
+→ *Sign-in method*, sin verificación por correo (la app deriva el correo del
+usuario `profe.juan_1` → `profe.juan_1@agroalert.local`, dominio ficticio).
 
-Hacerlo manualmente, sin costo:
+Verificación del 20-11-2026 con la API de Auth: `signUp` → 200,
+`signInWithPassword` → 200 y borrado del usuario de prueba → 200. No quedó
+ningún usuario de prueba en el proyecto.
 
-1. <https://console.firebase.google.com/project/agroalert-5a4ad/authentication/users>
-2. **Authentication → Sign-in method → Correo electrónico/contraseña → Habilitar → Guardar**.
-3. No hace falta verificación por correo: la app deriva el correo del usuario
-   (`profe.juan_1` → `profe.juan_1@agroalert.local`) en el dominio ficticio
-   `@agroalert.local`.
+Nota: la API pública de Identity Platform solo podía inicializar Auth mediante
+`identityPlatform:initializeAuth`, que upgradea a Identity Platform y cambia la
+facturación (Spark: 3.000 DAU; Blaze: 50.000 MAU gratis y luego pago). Por eso
+se hizo desde la consola, sin costo.
 
-Tras habilitarlo, la semilla `admin / admin1` y las cuentas creadas desde la app
-funcionan igual que en modo local, pero con Auth gestionando la clave.
+La semilla `admin / admin1` y las cuentas creadas desde la app funcionan con Auth
+gestionando la clave.
 
 ## Compilar
 
@@ -78,6 +78,6 @@ Function: queda como ampliación.
 ## Límites honestos
 
 - Firebase Auth conserva un token de sesión en el dispositivo; es estándar y no es la contraseña.
-- Hasta activar Email/Password en consola, esta APK no permite iniciar sesión.
+- El ingreso depende de que Firebase Auth siga habilitado en el proyecto; si se desactiva Email/Password, la app vuelve a responder `CONFIGURATION_NOT_FOUND`.
 - La clave del nodo Wi-Fi sigue viajando en texto plano al simulador: es un token del prototipo, distinto de la clave de la app. TLS requiere el módulo Wi-Fi de la etapa 2.
 - La clave de cuenta de servicio en `ClaveFirebase/` es un secreto de administrador: no se compila, no se publica y está ignorada por Git. Usar solo para tareas de configuración del proyecto.

@@ -5,7 +5,7 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 ## Qué está implementado
 
 - APK con cuatro pantallas: acceso, conexión Wi-Fi, monitoreo y control.
-- **Una sola clase de cuenta**: `admin/admin1` es la semilla inicial y cualquier cuenta creada ve y controla todo. Sin perfiles Control/Monitor. Cuentas y claves en Firebase Auth desde la 1.6.0; falta habilitar Email/Password en consola ([docs/FIREBASE.md](docs/FIREBASE.md)).
+- **Una sola clase de cuenta**: `admin/admin1` es la semilla inicial y cualquier cuenta creada ve y controla todo. Sin perfiles Control/Monitor. Cuentas y claves en Firebase Auth desde la 1.6.0, con Email/Password habilitado y verificado ([docs/FIREBASE.md](docs/FIREBASE.md)).
 - **Conexión Bluetooth directa al Arduino Uno + HC-05** documentado en la web del proyecto, sin servidor local: [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
 - **Arquitectura en dos etapas** que integra el trabajo de ambos integrantes: este repo es la capa de conexión real (Uno+HC-05 hoy, TCP mañana) y el repo de Sebastián Torres define la interfaz Compose y el firmware ESP32+Firebase de la etapa de escalabilidad: [docs/ARQUITECTURA_COMBINADA.md](docs/ARQUITECTURA_COMBINADA.md).
 - **Pantalla «Alertas y riesgos»** (frío, humedad ambiente y suelo) con banner de riesgo crítico en el panel: [docs/HUECOS_FUNCIONALES.md](docs/HUECOS_FUNCIONALES.md).
@@ -117,7 +117,7 @@ Android A · cuenta ── TCP/Wi-Fi ─┐
 Android B · cuenta ── TCP/Wi-Fi ─┘        └── Futuro: puente Wi-Fi ↔ Arduino
 ```
 
-Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicación directa teléfono-a-teléfono. Desde la 1.6.0 Firebase Auth/Firestore está activo en el proyecto `agroalert-5a4ad`; falta habilitar Email/Password en consola para que el acceso funcione; ver [docs/FIREBASE.md](docs/FIREBASE.md).
+Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicación directa teléfono-a-teléfono. Desde la 1.6.0 Firebase Auth/Firestore está activo en el proyecto `agroalert-5a4ad`, con Email/Password habilitado y verificado; ver [docs/FIREBASE.md](docs/FIREBASE.md).
 
 | Archivo | Responsabilidad |
 |---|---|
@@ -142,7 +142,7 @@ Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicació
 - [Mapa de cableado del Uno + HC-05 y compilación del firmware](docs/CABLEADO_ARDUINO.md).
 - [Rúbrica U3: evidencia por criterio y guion de demo](docs/RUBRICA_DEMO.md).
 - [Dónde y cómo guarda los datos la app (respuesta al docente)](docs/ARQUITECTURA_DATOS.md).
-- [Firebase activo: estado del proyecto, reglas y paso pendiente en consola](docs/FIREBASE.md).
+- [Firebase activo y verificado: estado del proyecto, reglas y límites](docs/FIREBASE.md).
 - [Probar el Bluetooth sin Arduino, con dos celulares](docs/SIMULADOR_BLUETOOTH.md).
 - [Huecos funcionales y ampliaciones pendientes](docs/HUECOS_FUNCIONALES.md): avisos de riesgo crítico, humedad de suelo y más control sobre el huerto.
 
