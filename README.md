@@ -5,7 +5,7 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 ## Qué está implementado
 
 - APK con cuatro pantallas: acceso, conexión Wi-Fi, monitoreo y control.
-- **Una sola clase de cuenta**: `admin/admin1` es la semilla inicial y cualquier cuenta creada ve y controla todo. Sin perfiles Control/Monitor. Cuentas y claves en Firebase Auth desde la 1.6.0, con Email/Password habilitado y verificado ([docs/FIREBASE.md](docs/FIREBASE.md)).
+- **Una sola clase de cuenta**: `admin/admin1` es la semilla inicial y cualquier cuenta creada ve y controla todo. Sin perfiles Control/Monitor. Cuentas y claves en Firebase Auth desde la 1.6.0; desde la 1.7.0 el registro pide un correo real y permite recuperar la clave con el enlace de Firebase ([docs/FIREBASE.md](docs/FIREBASE.md)).
 - **Conexión Bluetooth directa al Arduino Uno + HC-05** documentado en la web del proyecto, sin servidor local: [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
 - **Arquitectura en dos etapas** que integra el trabajo de ambos integrantes: este repo es la capa de conexión real (Uno+HC-05 hoy, TCP mañana) y el repo de Sebastián Torres define la interfaz Compose y el firmware ESP32+Firebase de la etapa de escalabilidad: [docs/ARQUITECTURA_COMBINADA.md](docs/ARQUITECTURA_COMBINADA.md).
 - **Pantalla «Alertas y riesgos»** (frío, humedad ambiente y suelo) con banner de riesgo crítico en el panel: [docs/HUECOS_FUNCIONALES.md](docs/HUECOS_FUNCIONALES.md).
@@ -172,6 +172,7 @@ entrega con otra:
 
 | Versión | Tag | Qué agrega |
 |---|---|---|
+| 1.7.0 | `v1.7.0` | Creación de cuenta con correo real, recuperación por enlace de Firebase, bloqueo progresivo por intentos y protección contra enumeración de correos |
 | 1.6.0 | `v1.6.0` | Firebase Auth/Firestore activo en `agroalert-5a4ad`, bitácora y claves en la nube sin caché local, reglas por uid publicadas |
 | 1.5.0 | `v1.5.0` | Cuenta única sin roles, política de claves reconectada, Firebase Auth/Firestore preparado pero inactivo, corrección v1.4 de Bluetooth |
 | 1.1.0 | `v1.1.0` | Conexión Bluetooth SPP directa al Arduino + HC-05, login con tarjetas de perfil, modo BT activable desde la app, `attack.py` de seguridad, guía de demo en 30 minutos |
@@ -179,7 +180,7 @@ entrega con otra:
 
 ## Alcance del prototipo
 
-La implementación aplica prácticas relacionadas con ISO/IEC 27400; **no implica certificación ni cumplimiento integral de la norma**. Las contraseñas locales se almacenan transformadas, pero el TCP del prototipo no utiliza TLS: las claves de acceso al nodo y la telemetría no tienen cifrado de extremo a extremo. WPA2/WPA3 protege el enlace inalámbrico y no sustituye TLS. El inicio de sesión lo gestiona Firebase Auth (1.6.0) y es la barrera de la app; el nodo aplica la autorización efectiva mediante su token, que la app envía siempre como `CONTROL` por compatibilidad con el prototipo.
+La implementación aplica prácticas relacionadas con ISO/IEC 27400; **no implica certificación ni cumplimiento integral de la norma**. Las contraseñas locales se almacenan transformadas, pero el TCP del prototipo no utiliza TLS: las claves de acceso al nodo y la telemetría no tienen cifrado de extremo a extremo. WPA2/WPA3 protege el enlace inalámbrico y no sustituye TLS. El inicio de sesión lo gestiona Firebase Auth (1.6.0) y es la barrera de la app; el nodo aplica la autorización efectiva mediante su token, que la app envía siempre como `CONTROL` por compatibilidad con el prototipo. El bloqueo por intentos y la espera progresiva (1.7.0) disuaden la prueba manual en el teléfono; la defensa contra bots está en el servidor: Firebase limita las peticiones y la protección contra enumeración de correos está activa y verificada. No hay MFA ni bloqueo por cuenta en Identity Platform, porque eso implicaría otro plan y no se activó.
 
 El monitoreo está orientado al uso con la app abierta. No incluye servicio de alarmas en segundo plano, notificaciones push, almacenamiento histórico permanente ni acceso desde Internet. Wi-Fi amplía la cobertura respecto del montaje Bluetooth, pero depende del alcance y conectividad de la red instalada.
 

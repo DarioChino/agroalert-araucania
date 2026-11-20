@@ -86,7 +86,7 @@ abstract class BaseActivity : AppCompatActivity() {
         return box
     }
 
-    protected fun field(hint: String, password: Boolean = false, initial: String = "", numeric: Boolean = false): TextInputEditText {
+    protected fun field(hint: String, password: Boolean = false, initial: String = "", numeric: Boolean = false, email: Boolean = false): TextInputEditText {
         val box = TextInputLayout(this).apply {
             this.hint = hint
             boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
@@ -99,6 +99,7 @@ abstract class BaseActivity : AppCompatActivity() {
             inputType = when {
                 password -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
                 numeric -> InputType.TYPE_CLASS_NUMBER
+                email -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
                 else -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
             }
             setText(initial)

@@ -3,6 +3,8 @@ package cl.agroalert.araucania
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.Query
@@ -27,42 +29,78 @@ object CloudStore {
             .build()
     }
 
-    private fun emailFor(username: String) = "${LocalAccounts.normalize(username)}$SUFFIX"
+    /** Cuentas nuevas entran con su correo; admin y cuentas antiguas con usuario derivado. */
+    private fun emailFor(identifier: String): String {
+        val value = LocalAccounts.normalize(identifier)
+        return if (value.contains('@')) value else "$value$SUFFIX"
+    }
     private fun userDoc(uid: String) = db.collection("users").document(uid)
     private fun currentUid() = auth.currentUser?.uid
     private fun reason(e: Exception) = e.message?.takeIf { it.isNotBlank() } ?: "revisa tu conexión"
 
-    fun signIn(username: String, password: String): Boolean = try {
-        Tasks.await(auth.signInWithEmailAndPassword(emailFor(username), password))
+    /** Un reset cambia la clave en Auth: se alinea el hash e historial de Firestore. */
+    private fun reconcile(password: String) {
+        val uid = currentUid() ?: return
+        val snap = Tasks.await(userDoc(uid).get())
+        val current = snap.getString("currentHash") ?: return
+        if (PasswordHash.verify(password, current)) return
+        val history = (snap.get("history") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+        val issue = LocalAccounts.validatePassword(password, snap.getString("username") ?: "") != null
+        Tasks.await(userDoc(uid).update(mapOf<String, Any>(
+            "currentHash" to PasswordHash.create(password),
+            "history" to (history + current).takeLast(3),
+            "changedAt" to System.currentTimeMillis(),
+            "policyIssue" to issue
+        )))
+    }
+
+    fun signIn(identifier: String, password: String): Boolean = try {
+        Tasks.await(auth.signInWithEmailAndPassword(emailFor(identifier), password))
+        try { reconcile(password) } catch (_: Exception) { /* Firestore no debe impedir entrar */ }
         true
     } catch (_: Exception) {
         false
     }
 
-    fun createAccount(username: String, password: String): String? {
+    fun createAccount(username: String, password: String, email: String): String? {
         LocalAccounts.validate(username, password)?.let { return it }
+        LocalAccounts.validateEmail(email)?.let { return it }
         val name = LocalAccounts.normalize(username)
+        val mailbox = LocalAccounts.normalize(email)
         return try {
-            val result = Tasks.await(auth.createUserWithEmailAndPassword(emailFor(name), password))
+            val result = Tasks.await(auth.createUserWithEmailAndPassword(mailbox, password))
             val uid = result.user?.uid ?: return "Firebase no devolvió la cuenta creada."
             Tasks.await(userDoc(uid).set(mapOf<String, Any>(
                 "username" to name,
+                "email" to mailbox,
                 "currentHash" to PasswordHash.create(password),
                 "changedAt" to System.currentTimeMillis(),
                 "history" to emptyList<String>()
             )))
             null
+        } catch (_: FirebaseAuthUserCollisionException) {
+            "No se pudo crear la cuenta. Revisa tus datos o inicia sesión."
         } catch (e: Exception) {
             "No se pudo crear la cuenta en la nube: ${reason(e)}"
         }
     }
 
+    fun requestPasswordReset(email: String): String? = try {
+        Tasks.await(auth.sendPasswordResetEmail(LocalAccounts.normalize(email)))
+        null
+    } catch (_: FirebaseAuthInvalidUserException) {
+        null // no revelar si el correo está registrado
+    } catch (e: Exception) {
+        "No se pudo enviar el correo: ${reason(e)}"
+    }
+
     fun changePassword(username: String, current: String, next: String): String? {
         val user = auth.currentUser ?: return "Inicia sesión para cambiar la clave."
-        if (user.email != emailFor(username)) return "La clave actual no corresponde a esta cuenta."
         LocalAccounts.validatePassword(next, username)?.let { return it }
         return try {
             val snap = Tasks.await(userDoc(user.uid).get())
+            if (snap.getString("username") != LocalAccounts.normalize(username))
+                return "La clave actual no corresponde a esta cuenta."
             val currentHash = snap.getString("currentHash")
                 ?: return "No hay registro de clave en la nube."
             val history = (snap.get("history") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
@@ -70,12 +108,14 @@ object CloudStore {
             if (PasswordHash.matchesAny(next, listOf(currentHash) + history))
                 return "La clave no puede repetir ninguna de las últimas 3."
 
-            Tasks.await(user.reauthenticate(EmailAuthProvider.getCredential(emailFor(username), current)))
+            val mailbox = user.email ?: emailFor(username)
+            Tasks.await(user.reauthenticate(EmailAuthProvider.getCredential(mailbox, current)))
             Tasks.await(user.updatePassword(next))
             Tasks.await(userDoc(user.uid).update(mapOf<String, Any>(
                 "currentHash" to PasswordHash.create(next),
                 "history" to (history + currentHash).takeLast(3),
-                "changedAt" to System.currentTimeMillis()
+                "changedAt" to System.currentTimeMillis(),
+                "policyIssue" to false
             )))
             null
         } catch (e: Exception) {
@@ -87,6 +127,7 @@ object CloudStore {
         val uid = currentUid() ?: return false
         return try {
             val snap = Tasks.await(userDoc(uid).get())
+            if (snap.getBoolean("policyIssue") == true) return true
             val changed = snap.getLong("changedAt") ?: 0L
             if (changed == 0L) {
                 userDoc(uid).update("changedAt", System.currentTimeMillis())

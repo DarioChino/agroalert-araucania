@@ -25,8 +25,9 @@ subcolecciones `events` y `commands`, usando `request.auth.uid`.
 
 Se activó **Correo electrónico/contraseña** en
 <https://console.firebase.google.com/project/agroalert-5a4ad/authentication/users>
-→ *Sign-in method*, sin verificación por correo (la app deriva el correo del
-usuario `profe.juan_1` → `profe.juan_1@agroalert.local`, dominio ficticio).
+→ *Sign-in method*, sin verificación por correo. La semilla y las cuentas
+antiguas derivan el correo del usuario (`admin` → `admin@agroalert.local`,
+dominio ficticio); desde la 1.7.0 cada cuenta nueva se crea con un correo real.
 
 Verificación del 20-11-2026 con la API de Auth: `signUp` → 200,
 `signInWithPassword` → 200 y borrado del usuario de prueba → 200. No quedó
@@ -43,6 +44,36 @@ documento `users/admin` (`currentHash`, `history` vacío, `changedAt`). Es una
 credencial pública de demo: cámbiala o bórrala antes de usar el proyecto con
 datos reales.
 
+## Cuentas y recuperación (1.7.0)
+
+El registro pide usuario, clave y **correo real**; Firebase crea la cuenta con
+ese correo y Firestore guarda `username`, `email`, `currentHash`, `history` y
+`changedAt` en `users/{uid}`. El ingreso acepta el correo; `admin` y las cuentas
+creadas antes de la 1.7.0 siguen entrando con su usuario derivado.
+
+«RECUPERAR CONTRASEÑA» llama a `sendPasswordResetEmail`: Firebase envía el
+enlace y la persona elige la clave nueva en la página de Firebase. Como ese
+cambio ocurre fuera de la app, el siguiente ingreso vuelve a alinear el hash y
+el historial de Firestore (`CloudStore.reconcile`), preservando los 3 históricos
+y la vigencia de 90 días. Si la clave elegida en la página de Firebase no cumple
+la política de la app, se marca `policyIssue` y el ingreso obliga a cambiarla.
+El dominio interno `@agroalert.local` se rechaza en el formulario porque allí no
+llega ningún correo.
+
+**Estado verificado en consola/API (20-11-2026):** `Email enumeration protection`
+está activa (`emailPrivacyConfig.enableImprovedEmailPrivacy = true`), así que
+un bot no puede usar `signIn`/`sendPasswordResetEmail` para descubrir qué
+correos existen; los correos de registro que ya están tomados siguen devolviendo
+`EMAIL_EXISTS`, por eso la app muestra un mensaje genérico. El bloqueo local de
+3 intentos con espera creciente (60 s → 5 min → 15 min) es una barrera de la
+interfaz, **no** una defensa contra bots que llamen a la API directamente.
+
+Pendiente de configurar en consola, sin cambios de código: bajar la cuota de
+`identitytoolkit.googleapis.com` en *Google Cloud → APIs y servicios → Identity
+Toolkit API → Cuotas* (por ejemplo peticiones por minuto por proyecto). MFA,
+bloqueo por cuenta y App Check con proveedor real requieren Identity Platform o
+un proveedor de atestación; no se activaron.
+
 ## Compilar
 
 ```powershell
@@ -50,14 +81,15 @@ $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 .\gradlew.bat :app:testDebugUnitTest :app:assembleDebug :app:lintDebug :app:assembleRelease
 ```
 
-La huella del release 1.6.0 es
-`B6AEE3CCF7725ACC5B77B245B26EAF3DE70F70B38C91740A7AE2152E91258721`.
+La huella del release 1.7.0 es
+`0713C5F809CE192BF1323BF05BC6A339FA5E9C220F8363F41C967E4E08EFE652`.
 
 ## Qué se guarda en cada modo
 
-| Dato | Sin JSON (modo local) | Con JSON (1.6.0, actual) |
+| Dato | Sin JSON (modo local) | Con JSON (1.7.0, actual) |
 |---|---|---|
 | Acceso | Hash PBKDF2 en `local_credentials.xml` | Firebase Auth; hash e historial en `users/{uid}` de Firestore |
+| Correo de recuperación | No existe | `users/{uid}.email` en Firestore; el enlace lo envía Firebase Auth |
 | Bitácora (60 eventos) | `bitacora.xml` | `users/{uid}/events` |
 | Cola de órdenes (5) | `buffer.xml` | `users/{uid}/commands` |
 | Temperatura / humedad | Solo en memoria, caducan a 7 s | Igual: no se guardan en ningún lado |

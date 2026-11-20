@@ -14,6 +14,12 @@ class CredentialsTest {
         assertNotNull(LocalAccounts.validate("profe", "abc"))
         assertNotNull(LocalAccounts.validate("profe", "x".repeat(129)))
     }
+    @Test fun `recovery email must be a real mailbox`() {
+        assertNull(LocalAccounts.validateEmail("profe.juan@gmail.com"))
+        assertNotNull(LocalAccounts.validateEmail("profe.juan@agroalert.local"))
+        assertNotNull(LocalAccounts.validateEmail("sin-arroba"))
+        assertNotNull(LocalAccounts.validateEmail("a@b.c"))
+    }
     @Test fun `password policy requires eight characters upper lower and digit`() {
         assertNull(LocalAccounts.validate("profe", "Huerto2026"))
         assertNotNull(LocalAccounts.validate("profe", "huerto2026"))
@@ -33,6 +39,8 @@ class CredentialsTest {
         assertEquals(1L, third.remaining(60_299))
         assertEquals(0L, third.remaining(60_300))
         assertEquals(AttemptState(1, 0), third.failed(60_300))
+        val longLock = AttemptState().failed(100).failed(200).failed(300, 300_000L)
+        assertEquals(300_000L, longLock.remaining(300))
     }
     @Test fun `arduino bluetooth replies map to standard acks`() {
         assertEquals("ACK:1", Protocol.ackForArduino("RELE:ENCENDIDO_MANUAL"))

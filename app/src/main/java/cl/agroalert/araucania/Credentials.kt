@@ -27,9 +27,9 @@ object PasswordHash {
 
 data class AttemptState(val failures: Int = 0, val blockedUntil: Long = 0) {
     fun remaining(now: Long): Long = (blockedUntil - now).coerceAtLeast(0)
-    fun failed(now: Long): AttemptState {
+    fun failed(now: Long, waitMs: Long = 60_000L): AttemptState {
         val count = if (blockedUntil > 0 && now >= blockedUntil) 1 else failures + 1
-        return if (count >= 3) AttemptState(0, now + 60_000) else AttemptState(count, 0)
+        return if (count >= 3) AttemptState(0, now + waitMs) else AttemptState(count, 0)
     }
 }
 
@@ -75,21 +75,43 @@ class Credentials(context: Context) {
             val stored = if (keyFor(name) == "admin") record else LocalAccounts.decode(record)
             stored != null && password.length <= 128 && PasswordHash.verify(password, stored)
         }
-        val next = if (valid) AttemptState() else state().failed(now)
+        val next = if (valid) {
+            prefs.edit().remove("strikes").apply()
+            AttemptState()
+        } else {
+            val strikes = prefs.getInt("strikes", 0) + 1
+            prefs.edit().putInt("strikes", strikes).apply()
+            val wait = when {
+                strikes < 6 -> 60_000L
+                strikes < 9 -> 300_000L
+                else -> 900_000L
+            }
+            state().failed(now, wait)
+        }
         prefs.edit().putInt("failures", next.failures).putLong("blocked", next.blockedUntil).commit()
         return valid
     }
 
     /** Crea una cuenta. Devuelve null si quedó creada, o el motivo del rechazo. */
-    fun register(username: String, password: String): String? {
+    fun register(username: String, password: String, email: String = ""): String? {
         LocalAccounts.validate(username, password)?.let { return it }
         val name = LocalAccounts.normalize(username)
-        if (BuildConfig.CLOUD_ENABLED) return CloudStore.createAccount(name, password)
+        if (BuildConfig.CLOUD_ENABLED) {
+            LocalAccounts.validateEmail(email)?.let { return it }
+            return CloudStore.createAccount(name, password, email.trim())
+        }
         val key = "acct:$name"
         if (prefs.contains(key)) return "Ese usuario ya existe en este teléfono."
         prefs.edit().putString(key, PasswordHash.create(password))
             .putLong(changedKey(key), System.currentTimeMillis()).commit()
         return null
+    }
+
+    /** Envía el enlace de restablecimiento de Firebase al correo registrado. */
+    fun requestReset(email: String): String? {
+        if (!BuildConfig.CLOUD_ENABLED) return "Firebase no está configurado en esta instalación."
+        LocalAccounts.validateEmail(email)?.let { return it }
+        return CloudStore.requestPasswordReset(email.trim())
     }
 
     /** Instalaciones anteriores a esta política arrancan el conteo ahora, no obligan a cambiar. */

@@ -11,6 +11,18 @@ object LocalAccounts {
     private val DIGITO = Regex("[0-9]")
     private val RESERVED = setOf("admin")
     private val COMMON = listOf("1234", "123456", "qwerty", "password", "abc123", "111111")
+    private val EMAIL = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+
+    /** El correo debe ser real: Firebase no entrega a nuestro dominio interno. */
+    fun validateEmail(email: String): String? {
+        val value = email.trim()
+        return when {
+            value.length > 120 -> "El correo es demasiado largo."
+            value.endsWith("@agroalert.local") -> "Ese dominio no recibe correos; usa tu correo real."
+            !EMAIL.matches(value) -> "Escribe un correo válido para recuperar la clave."
+            else -> null
+        }
+    }
 
     fun normalize(username: String) = username.trim().lowercase()
 

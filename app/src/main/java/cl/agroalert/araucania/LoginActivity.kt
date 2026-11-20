@@ -16,11 +16,14 @@ class LoginActivity : BaseActivity() {
     private lateinit var userName: TextInputEditText
     private lateinit var newUser: TextInputEditText
     private lateinit var newPass: TextInputEditText
+    private lateinit var newEmail: TextInputEditText
     private lateinit var accountFeedback: TextView
     private lateinit var chgUser: TextInputEditText
     private lateinit var chgAuth: TextInputEditText
     private lateinit var chgNew: TextInputEditText
     private lateinit var resetFeedback: TextView
+    private lateinit var recoverEmail: TextInputEditText
+    private lateinit var recoverFeedback: TextView
     private var busy = false
     private val timer = object : Runnable {
         override fun run() {
@@ -51,9 +54,9 @@ class LoginActivity : BaseActivity() {
         label("Temperatura, humedad y riego, desde tu bolsillo.", 15, muted, parent = intro)
 
         label("ACCESO ÚNICO", 11, muted, true)
-        userName = field("Usuario (admin o cuenta propia)")
+        userName = field("Usuario o correo (admin: admin)")
         password = field("Contraseña", password = true)
-        feedback = label("3 intentos fallidos bloquean el ingreso durante 60 segundos.", 13, muted)
+        feedback = label("3 intentos fallidos bloquean el ingreso; la espera crece en cada ronda.", 13, muted)
         gap()
         submit = button("Entrar") {
             if (busy) return@button
@@ -69,7 +72,7 @@ class LoginActivity : BaseActivity() {
                         if (ok) {
                             if (agro.credentials.passwordExpired(user)) {
                                 resetFeedback.setTextColor(red)
-                                resetFeedback.text = "Clave vencida (90 días). Cámbiala más abajo para continuar."
+                                resetFeedback.text = "La clave debe cambiarse antes de continuar (vigencia o política de claves)."
                             } else {
                                 agro.loggedIn = true
                                 startActivity(Intent(this, ConnectionActivity::class.java))
@@ -94,7 +97,8 @@ class LoginActivity : BaseActivity() {
         label("TU PROPIA CUENTA · ACCESO COMPLETO", 11, muted, true)
         newUser = field("Usuario nuevo")
         newPass = field("Contraseña nueva", password = true)
-        accountFeedback = label("La contraseña necesita 8 caracteres con mayúscula, minúscula y número, sin patrones comunes ni tu usuario.", 13, muted)
+        newEmail = field("Correo real (para recuperar la clave)", email = true)
+        accountFeedback = label("8 caracteres con mayúscula, minúscula y número, sin patrones comunes ni tu usuario. El correo debe ser real: allí llegará el enlace de recuperación.", 13, muted)
         button("Crear cuenta") {
             if (busy) return@button
             busy = true
@@ -102,15 +106,16 @@ class LoginActivity : BaseActivity() {
             accountFeedback.text = "Creando cuenta…"
             val user = newUser.text?.toString() ?: ""
             val pass = newPass.text?.toString() ?: ""
+            val email = newEmail.text?.toString() ?: ""
             Thread {
-                val problem = agro.credentials.register(user, pass)
+                val problem = agro.credentials.register(user, pass, email)
                 runOnUiThread {
                     busy = false
                     if (!isDestroyed) {
                         if (problem == null) {
-                            newUser.text?.clear(); newPass.text?.clear()
+                            newUser.text?.clear(); newPass.text?.clear(); newEmail.text?.clear()
                             accountFeedback.setTextColor(green)
-                            accountFeedback.text = "Cuenta creada para ${LocalAccounts.normalize(user)}. Ya puedes iniciar sesión con ella."
+                            accountFeedback.text = "Cuenta creada para ${LocalAccounts.normalize(user)}. Entra usando ${email.trim()}."
                         } else {
                             accountFeedback.setTextColor(red)
                             accountFeedback.text = problem
@@ -145,6 +150,33 @@ class LoginActivity : BaseActivity() {
                         } else {
                             resetFeedback.setTextColor(red)
                             resetFeedback.text = problem
+                        }
+                    }
+                }
+            }.start()
+        }
+        gap(18)
+        label("RECUPERAR CONTRASEÑA", 11, muted, true)
+        recoverEmail = field("Correo registrado al crear la cuenta", email = true)
+        recoverFeedback = label("Firebase envía un enlace para elegir una clave nueva. Las cuentas antiguas sin correo no pueden recuperarse por aquí.", 13, muted)
+        button("Enviar enlace de recuperación", secondary = true) {
+            if (busy) return@button
+            busy = true
+            recoverFeedback.setTextColor(muted)
+            recoverFeedback.text = "Enviando…"
+            val email = recoverEmail.text?.toString() ?: ""
+            Thread {
+                val problem = agro.credentials.requestReset(email)
+                runOnUiThread {
+                    busy = false
+                    if (!isDestroyed) {
+                        if (problem == null) {
+                            recoverEmail.text?.clear()
+                            recoverFeedback.setTextColor(green)
+                            recoverFeedback.text = "Revisa tu correo y sigue el enlace de Firebase para elegir la clave nueva."
+                        } else {
+                            recoverFeedback.setTextColor(red)
+                            recoverFeedback.text = problem
                         }
                     }
                 }
