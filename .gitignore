@@ -9,4 +9,5 @@ local.properties
 keystore/
 __pycache__/
 simulator/credentials.json
+app/google-services.json
 entregables/

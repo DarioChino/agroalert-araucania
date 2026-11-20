@@ -13,6 +13,10 @@ Este documento define la interfaz que implementan la app y el simulador. **Todav
 
 ## Autenticación
 
+> `ROL:CONTROL` y `ROL:MONITOR` son **campos del contrato del nodo/simulador**,
+> no perfiles de cuenta de la app: desde la 1.5.0 cualquier cuenta creada tiene
+> acceso completo y la app envía siempre `CONTROL`. El simulador no se modificó.
+
 Primera línea enviada por el celular:
 
 ```text

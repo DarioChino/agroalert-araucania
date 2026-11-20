@@ -40,13 +40,11 @@ class NodeConnection {
     @Volatile private var generation = 0
     @Volatile private var tcpSocket: Socket? = null
     @Volatile private var btSocket: BluetoothSocket? = null
-    @Volatile private var role: Role? = null
     private var commandSequence = 0L
     // Datos del último enlace Wi-Fi para la reconexión automática (null = no reconectar).
     private var autoHost: String? = null
     private var autoPort = 0
     private var autoKey: String? = null
-    private var autoRole: Role? = null
     // Datos del último enlace Bluetooth, para reconectar igual que se hace con Wi-Fi.
     private var autoDevice: BluetoothDevice? = null
     @Volatile private var transportIsBt = false
@@ -63,10 +61,10 @@ class NodeConnection {
         return (listOf("$time · $text") + state.events).take(12)
     }
 
-    fun connect(host: String, port: Int, accessKey: String, selectedRole: Role) {
+    fun connect(host: String, port: Int, accessKey: String) {
         autoDevice = null; transportIsBt = false
-        autoHost = host; autoPort = port; autoKey = accessKey; autoRole = selectedRole
-        launch(selectedRole, "Conectando con $host:$port…") { id ->
+        autoHost = host; autoPort = port; autoKey = accessKey
+        launch("Conectando con $host:$port…") { id ->
             val client = Socket()
             tcpSocket = client
             try {
@@ -74,17 +72,18 @@ class NodeConnection {
                 client.soTimeout = 1000
                 client.tcpNoDelay = true
                 val input = client.getInputStream()
-                client.getOutputStream().write("AUTH|ROL:${selectedRole.wire}|TOKEN:$accessKey\n".toByteArray(Charsets.UTF_8))
-                readLoop(input, client.getOutputStream(), id, selectedRole, authenticated = false)
+                // El simulador sigue esperando ROL:CONTROL; no es un perfil de cuenta de la app.
+                client.getOutputStream().write("AUTH|ROL:${Protocol.NODE_ROLE}|TOKEN:$accessKey\n".toByteArray(Charsets.UTF_8))
+                readLoop(input, client.getOutputStream(), id, authenticated = false)
             } finally { runCatching { client.close() } }
         }
     }
 
     @SuppressLint("MissingPermission") // ConnectionActivity exige BLUETOOTH_CONNECT antes de llamar aquí
-    fun connectBluetooth(device: BluetoothDevice, selectedRole: Role) {
+    fun connectBluetooth(device: BluetoothDevice) {
         val label = try { device.name } catch (_: SecurityException) { null } ?: "el módulo Bluetooth"
         autoHost = null; autoDevice = device; transportIsBt = true
-        launch(selectedRole, "Conectando con $label…") { id ->
+        launch("Conectando con $label…") { id ->
             // Con un escaneo activo Android suele rechazar el SPP; hay que cancelarlo antes de connect().
             runCatching { BluetoothAdapter.getDefaultAdapter()?.cancelDiscovery() }
             val client = device.createRfcommSocketToServiceRecord(SPP_UUID)
@@ -98,19 +97,18 @@ class NodeConnection {
                         reconnectAttempts = 0
                         update(state.copy(connected = true, connecting = false, bluetooth = true,
                             message = "Enlace Bluetooth establecido · esperando lecturas",
-                            events = event(if (recovered) "Bluetooth reconectado" else "Nodo conectado · ${selectedRole.label}")))
+                            events = event(if (recovered) "Bluetooth reconectado" else "Nodo conectado")))
                         if (recovered) drainPending(id)
                     }
                 }
-                readLoop(client.inputStream, client.outputStream, id, selectedRole, authenticated = true)
+                readLoop(client.inputStream, client.outputStream, id, authenticated = true)
             } finally { runCatching { client.close() } }
         }
     }
 
-    private fun launch(selectedRole: Role, message: String, block: (Int) -> Unit) {
+    private fun launch(message: String, block: (Int) -> Unit) {
         generation++
         closeSockets()
-        role = selectedRole
         val id = generation
         update(NodeState(connecting = true, message = message))
         Thread({
@@ -140,7 +138,7 @@ class NodeConnection {
     }
 
     /** Bucle común de ambos enlaces: bytes → líneas → autenticación, telemetría y confirmaciones. */
-    private fun readLoop(input: InputStream, output: OutputStream, id: Int, selectedRole: Role, authenticated: Boolean) {
+    private fun readLoop(input: InputStream, output: OutputStream, id: Int, authenticated: Boolean) {
         var authed = authenticated
         var lastValid = SystemClock.elapsedRealtime()
         val buffer = StringBuilder()
@@ -177,7 +175,7 @@ class NodeConnection {
                     if (id == generation) {
                         update(state.copy(connected = true, connecting = false,
                             message = "Enlace establecido · esperando lecturas", simulated = message.endsWith("SIMULADOR"),
-                            events = event(if (recovered) "Reconectado automáticamente" else "Nodo conectado · ${selectedRole.label}")))
+                            events = event(if (recovered) "Reconectado automáticamente" else "Nodo conectado")))
                         if (recovered) drainPending(id)
                     }
                 }
@@ -219,7 +217,7 @@ class NodeConnection {
     }
 
     fun send(command: Char) {
-        if (role != Role.CONTROL || !state.connected || state.pending != null || command !in "10A") return
+        if (!state.connected || state.pending != null || command !in "10A") return
         val reading = state.telemetry ?: return
         if (SystemClock.elapsedRealtime() - state.receivedAt > 7000 || reading.risk == Risk.SENSOR_ERROR) return
         val id = generation
@@ -249,11 +247,10 @@ class NodeConnection {
     fun disconnect(reason: String = "Desconectado") {
         generation++
         closeSockets()
-        autoHost = null; autoKey = null; autoRole = null; autoDevice = null
+        autoHost = null; autoKey = null; autoDevice = null
         transportIsBt = false
         reconnectAttempts = 0
         autoReconnecting = false
-        role = null
         update(state.copy(connected = false, connecting = false, pending = null, confirmation = null,
             message = reason, events = event(reason)))
     }
@@ -267,25 +264,23 @@ class NodeConnection {
     private fun scheduleReconnect(reason: String) {
         generation++
         closeSockets()
-        val host = autoHost; val key = autoKey; val target = autoRole; val device = autoDevice
-        if (target == null || (host == null && device == null) || (host != null && key == null) || reconnectAttempts >= 5) {
+        val host = autoHost; val key = autoKey; val device = autoDevice
+        if ((host == null && device == null) || (host != null && key == null) || reconnectAttempts >= 5) {
             autoReconnecting = false
             val final = if (host == null && device == null) reason else "No se pudo reconectar tras 6 reintentos"
-            role = null
             update(state.copy(connected = false, connecting = false, pending = null, confirmation = null,
                 message = final, events = event(final)))
             return
         }
         reconnectAttempts++
         autoReconnecting = true
-        role = null
         val notice = "Reconectando ($reconnectAttempts/6)…"
         val ticket = reconnectAttempts
         update(state.copy(connected = false, connecting = true, pending = null, confirmation = null,
             message = notice, events = event("$reason · $notice")))
         main.postDelayed({
             if (autoReconnecting && reconnectAttempts == ticket) {
-                if (device != null) connectBluetooth(device, target) else connect(host!!, autoPort, key!!, target)
+                if (device != null) connectBluetooth(device) else connect(host!!, autoPort, key!!)
             }
         }, 5000)
     }

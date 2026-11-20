@@ -8,6 +8,9 @@ módulo Wi-Fi.
 
 ## Lo que la app ya garantiza (no cambia)
 
+> Los campos `ROL:CONTROL` / `ROL:MONITOR` pertenecen al protocolo del nodo, no
+> a la app: desde la 1.5.0 no hay perfiles y la app envía siempre `CONTROL`.
+
 - TCP a la IP y puerto que escribe la persona usuaria (por omisión **5000**).
 - Autenticación de primera línea `AUTH|ROL:CONTROL|TOKEN:<clave>` o `MONITOR`
   con clave de 16–128 caracteres; espera `AUTH:OK` y cierra ante `AUTH:ERROR`.

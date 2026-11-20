@@ -13,7 +13,7 @@ pocos datos y sin relaciones entre ellos.
 
 | Archivo | Contenido | Formato |
 |---|---|---|
-| `local_credentials` | Hash de la clave de cada cuenta (`salt:hash` en Base64) + contador de intentos fallidos y bloqueo. Semillas `admin`/`monitor` y **cuentas propias creadas desde la app (v1.2.0)** bajo la clave `acct:<usuario>` | PBKDF2-HMAC-SHA256, 120.000 iteraciones, sal aleatoria de 16 bytes |
+| `local_credentials` | Hash de la clave de cada cuenta (`salt:hash` en Base64) + contador de intentos fallidos y bloqueo. Semilla `admin` y **cuentas creadas desde la app (v1.5.0)** bajo la clave `acct:<usuario>`. Con Firebase activo estos datos pasan a Firestore. | PBKDF2-HMAC-SHA256, 120.000 iteraciones, sal aleatoria de 16 bytes |
 | `bitacora` | Últimos 60 eventos del nodo (conexiones, órdenes, cambios de riesgo) | Líneas de texto `fecha · evento` |
 | `ui` | Modo claro/oscuro elegido | Booleano |
 | Telemetría | **No se persiste**: vive solo en memoria mientras la app está abierta | — |
@@ -24,29 +24,30 @@ queda en el teléfono es un hash con sal, distinto en cada instalación.
 `CredentialsTest` lo demuestra: dos claves iguales producen hashes distintos, y
 el hash no contiene la clave.
 
-### Cuentas propias (novedad 1.2.0)
+### Cuenta única (cambio 1.5.0)
 
-Desde la pantalla de ingreso cualquiera puede **crear su cuenta local** con el
-perfil (Control o Monitor) que esté seleccionado; queda guardada como hash en el
-mismo archivo privado y sobrevive al cierre de la app. Cada dueño cambia su
-clave con su clave actual, y un usuario Control puede **restablecer la clave de
-cualquier cuenta** (vía de recuperación sin email: quien tenga la clave de
-`admin` autoriza el cambio). Las semillas `admin`/`monitor` no se eliminan en
-ningún caso y comparten el mismo contador de bloqueo.
+Desde la pantalla de ingreso cualquiera puede **crear una cuenta**; no hay
+perfiles: toda cuenta ve el panel y puede accionar el relé. Mientras no exista
+`app/google-services.json`, el registro queda como hash PBKDF2 en el mismo
+archivo privado. Con Firebase activo, Firebase Auth guarda la credencial y
+Firestore el hash de política (historial de 3 y fecha de cambio), con la caché
+offline desactivada. Cada dueño cambia su clave con su clave actual; no hay
+«admin» con privilegios de recuperación. La semilla `admin/admin1` se conserva
+para la demo y todas las cuentas comparten el contador de bloqueo.
 
 ## 2. Respuesta lista para el docente (30 segundos)
 
 > «La app no usa SQL: el modelo de datos del prototipo es mínimo (hashes de
 > credenciales, contadores de bloqueo y una bitácora de 60 eventos), así
 > que usamos SharedPreferences, el almacenamiento clave-valor **privado** de
-> Android. Desde la versión 1.2.0 cada persona crea su propia cuenta en el
-> teléfono y puede cambiar o restablecer su clave. Las claves nunca se guardan
-> en texto plano: van con **PBKDF2 con sal** (120.000 iteraciones), comparación
-> en tiempo constante y bloqueo por intentos. La telemetría ni siquiera se
-> persiste: es de solo lectura y caduca a los 7 segundos. Si el proyecto crece
-> a historial consultable o cuentas en la nube con recuperación por correo, el
-> camino natural es **SQLite con Room** primero y **Firebase** después — está
-> documentado como etapa de escalabilidad.»
+> Android. Desde la versión 1.5.0 hay una sola clase de cuenta: cada persona
+> crea la suya y puede cambiar su clave; todas ven y controlan el nodo. Las
+> claves nunca se guardan en texto plano: van con **PBKDF2 con sal** (120.000
+> iteraciones), comparación en tiempo constante y bloqueo por intentos. La
+> telemetría ni siquiera se persiste: es de solo lectura y caduca a los 7
+> segundos. Firebase Auth + Firestore ya están preparados en `docs/FIREBASE.md`;
+> se activan al copiar el `google-services.json` real, y entonces la bitácora y
+> la cola de órdenes dejan de guardarse en el teléfono.»
 
 ### Política de claves vigente
 
@@ -57,8 +58,8 @@ ningún caso y comparten el mismo contador de bloqueo.
 - Firebase Auth + Firestore sigue siendo la etapa D2 documentada; no se usa en esta entrega.
 
 Puntos fuertes a mencionar si pregunta más: `allowBackup=false` en el manifest
-(los datos no salen en backups), datos personales cero (solo rol), sin nube
-(los datos no abandonan la red local).
+(los datos no salen en backups), datos personales cero (solo usuario) y nube
+preparada en `docs/FIREBASE.md` (inactiva hasta que exista el JSON).
 
 ## 3. La idea de «que cualquiera se haga cuenta + servidor en la nube»
 

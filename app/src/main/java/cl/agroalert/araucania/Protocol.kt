@@ -1,28 +1,15 @@
 package cl.agroalert.araucania
 
-enum class Role(val wire: String, val label: String) {
-    CONTROL("CONTROL", "Control"), MONITOR("MONITOR", "Monitor")
-}
-
-/** Nombres de usuario locales aceptados en el inicio de sesión. */
-object Users {
-    fun resolve(username: String): Role? = when (username.trim().lowercase()) {
-        "admin", "control" -> Role.CONTROL
-        "monitor" -> Role.MONITOR
-        else -> null
-    }
-}
-
 /**
- * Cuentas propias creadas en el teléfono: validación de datos y decodificación del
- * registro persistente "ROL:salt:hash" guardado en SharedPreferences.
+ * Cuentas de la app: una sola clase, sin perfiles. El registro local guarda
+ * únicamente "salt:hash" (PBKDF2); con Firebase activo ese valor vive en Firestore.
  */
 object LocalAccounts {
     private val NAME = Regex("[a-z0-9._]{3,20}")
     private val MAYUS = Regex("[A-Z]")
     private val MINUS = Regex("[a-z]")
     private val DIGITO = Regex("[0-9]")
-    private val RESERVED = setOf("admin", "control", "monitor")
+    private val RESERVED = setOf("admin")
     private val COMMON = listOf("1234", "123456", "qwerty", "password", "abc123", "111111")
 
     fun normalize(username: String) = username.trim().lowercase()
@@ -40,14 +27,14 @@ object LocalAccounts {
     /** null si los datos sirven; si no, el motivo para mostrar en pantalla. */
     fun validate(username: String, password: String): String? = when {
         !NAME.matches(normalize(username)) -> "El usuario debe tener 3 a 20 letras, números, punto o guion bajo."
-        normalize(username) in RESERVED -> "Ese nombre está reservado para las cuentas del equipo."
+        normalize(username) in RESERVED -> "Ese nombre está reservado para la cuenta inicial."
         else -> validatePassword(password, normalize(username))
     }
 
-    /** Devuelve el rol y la credencial "salt:hash" del registro, o null si está corrupto. */
-    fun decode(record: String): Pair<Role, String>? = runCatching {
-        val (wire, stored) = record.split(':', limit = 2)
-        Pair(Role.valueOf(wire), stored)
+    /** Devuelve la credencial "salt:hash" del registro, o null si está corrupto. */
+    fun decode(record: String): String? = runCatching {
+        val parts = record.split(':')
+        if (parts.size == 2 && parts.all { it.isNotBlank() }) record else null
     }.getOrNull()
 }
 
@@ -68,6 +55,8 @@ data class Telemetry(
 
 object Protocol {
     const val MAX_LINE = 512
+    /** El simulador sigue esperando este campo por cable; no es un perfil de cuenta. */
+    const val NODE_ROLE = "CONTROL"
 
     /** El firmware Bluetooth original responde con texto propio; se traduce al ACK estándar. */
     fun ackForArduino(line: String): String? = when (line) {

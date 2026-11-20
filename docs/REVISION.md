@@ -1,5 +1,8 @@
 # Revisión profunda — 11-11-2026
 
+> Documento histórico: las pruebas de cuenta se hicieron con los perfiles de la
+> 1.2.0. Desde la 1.5.0 hay una sola clase de cuenta; ver [FIREBASE.md](FIREBASE.md).
+
 Revisión previa a la compilación del APK de publicación. Se revisó el código, se
 compiló desde cero, se ejecutaron las pruebas y se probó el flujo completo en un
 emulador Android 16 (API 36).

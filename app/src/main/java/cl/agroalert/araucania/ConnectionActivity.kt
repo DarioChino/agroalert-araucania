@@ -45,7 +45,7 @@ class ConnectionActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         if (!requireSession()) return
         val prefs = getSharedPreferences("connection", MODE_PRIVATE)
-        page("01 / Conexión · ${agro.role!!.label}", "Enlaza tu nodo.", "Conecta por Bluetooth con el Arduino (HC-05) o por Wi-Fi con el nodo de red y el simulador.")
+        page("01 / Conexión", "Enlaza tu nodo.", "Conecta por Bluetooth con el Arduino (HC-05) o por Wi-Fi con el nodo de red y el simulador.")
         label("BLUETOOTH · ARDUINO + HC-05", 11, muted, true)
         btStatus = label("Enciende el Arduino y tócalo en la lista. El PIN del HC-05 se pide UNA sola vez al vincular, en Ajustes de Android, nunca aquí.", 13, muted)
         button("Buscar módulos emparejados") { listBonded() }
@@ -58,7 +58,7 @@ class ConnectionActivity : BaseActivity() {
         label("Cada celular abre su propia conexión. Ambos reciben el mismo estado del sistema.", 14, muted, parent = info)
         val host = field("Dirección IP del nodo", initial = prefs.getString("host", "") ?: "")
         val port = field("Puerto TCP", initial = prefs.getInt("port", 5000).toString(), numeric = true)
-        key = field("Clave del nodo para ${agro.role!!.label}", password = true)
+        key = field("Clave del nodo (CLAVE_CONTROL del simulador)", password = true)
         label("Esta clave la entrega el nodo o el simulador. Es diferente de tu contraseña de inicio de sesión.", 13, muted)
         gap()
         status = label("Listo para conectar", 14, green)
@@ -74,7 +74,7 @@ class ConnectionActivity : BaseActivity() {
                 status.text = "La clave del nodo debe tener entre 16 y 128 letras, números, guiones o guiones bajos."
             } else {
                 prefs.edit().putString("host", address).putInt("port", p).apply()
-                agro.node.connect(address, p, token, agro.role!!)
+                agro.node.connect(address, p, token)
             }
         }
         button("Cerrar sesión", secondary = true) { logout() }
@@ -116,7 +116,7 @@ class ConnectionActivity : BaseActivity() {
             askBtPermission.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN))
             return
         }
-        try { agro.node.connectBluetooth(device, agro.role!!) }
+        try { agro.node.connectBluetooth(device) }
         catch (_: SecurityException) { btStatus.text = "Falta el permiso de Bluetooth; actívalo y vuelve a intentar." }
     }
     override fun onStart() {

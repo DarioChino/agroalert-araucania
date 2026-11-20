@@ -19,8 +19,8 @@ Cobertura de casos:
 - Hashes con sal, aceptación de contraseña correcta y rechazo de contraseña equivocada.
 - Bloqueo en tercer intento y expiración a los 60 s.
 - Dos clientes TCP simultáneos reciben el mismo estado.
-- Monitor rechazado al intentar controlar, incluso enviando un comando directamente.
-- Clave de Monitor no autentica el rol Control.
+- Comando directo sin token válido rechazado por el nodo.
+- Cualquier cuenta autenticada puede enviar órdenes (sin perfiles).
 - Autenticación fragmentada en varios envíos TCP.
 - Comandos `1`, `0` y `A` confirmados y publicados a los clientes.
 - Sensor en error bloquea comandos en el servidor.
@@ -33,14 +33,14 @@ Estas pruebas no sustituyen la demostración con dos celulares y hardware real.
 | Comprobación | Resultado |
 |---|---|
 | `:app:assembleDebug` | APK generado correctamente |
-| `:app:testDebugUnitTest` | 6 pruebas aprobadas |
+| `:app:testDebugUnitTest` | 15 pruebas aprobadas (9 `CredentialsTest` + 6 `ProtocolTest`) |
 | `:app:lintDebug` | 0 errores (quedan advertencias de textos y estilos) |
 | Simulador Python | 5 pruebas de integración aprobadas |
 | Emulador Android 16 (API 36) | Flujo de configuración, login, conexión y panel verificado |
 | Telemetría | 15 °C / 65 % recibidos y visualizados; ciclo 15/8/3 °C observado |
 | Control | Encender, apagar y automático verificados; relé y modo reflejados |
 | Confirmación | `Orden confirmada por el nodo · ACK:0` visible |
-| Segundo cliente Monitor | Recibió `RELE:ACTIVADO|MODO:MANUAL` junto al Control |
+| Segundo cliente con otra cuenta | Recibió `RELE:ACTIVADO|MODO:MANUAL` junto al primero |
 | Pérdida de enlace | Cubierta por diseño y pruebas de protocolo; pendiente repetir en video con dos teléfonos |
 | Hardware físico | Pendiente: no hay módulo Wi-Fi definido ni firmware adaptado |
 
@@ -52,7 +52,7 @@ Capturas del emulador: [panel simulado](evidencias/02_panel_simulacion.png) y [c
 |---|---|---|
 | 1 | Instalar la misma APK en dos Android | Ambas instalaciones abren correctamente |
 | 2 | Configurar accesos y fallar tres veces | Bloqueo visible por 60 s, también después de cerrar y abrir |
-| 3 | Ingresar como Control y Monitor | Ambos acceden; Monitor no tiene controles |
+| 3 | Ingresar con `admin` y con una cuenta creada desde la app | Ambos acceden con control completo |
 | 4 | Conectar a la IP y claves correctas | Panel activo, lecturas en ambos equipos |
 | 5 | Simular 15, 8 y 3 °C con `--cycle` | Verde, amarillo, rojo; automático activa relé a ≤5 °C |
 | 6 | Enviar encender y apagar | ACK, cambio reflejado en los dos paneles |

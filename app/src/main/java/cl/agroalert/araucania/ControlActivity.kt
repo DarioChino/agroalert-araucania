@@ -31,7 +31,6 @@ class ControlActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!requireSession()) return
-        if (agro.role != Role.CONTROL) { finish(); return }
         page("03 / Control", "Gestiona el riego.", "Las órdenes se confirman desde el nodo. El panel muestra el estado que realmente reporta el relé.")
         source = label("", 12, amber, true)
         gap()

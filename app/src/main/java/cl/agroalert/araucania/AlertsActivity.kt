@@ -22,7 +22,7 @@ class AlertsActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!requireSession()) return
-        page("03 / Alertas · ${agro.role!!.label}", "Alertas y riesgos", "Cada factor se evalúa por separado y solo con datos frescos del nodo.")
+        page("03 / Alertas", "Alertas y riesgos", "Cada factor se evalúa por separado y solo con datos frescos del nodo.")
         summary = label("Sin lectura", 15, muted, true)
         gap(14)
         factors = card()

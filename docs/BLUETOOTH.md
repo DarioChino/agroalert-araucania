@@ -51,8 +51,8 @@ nunca vuelve a pedirlo: después de eso, conectar es tocar el HC-05 en la lista.
 
 ## Minuto 20-25: conectar la app
 
-1. Abre AgroAlert e inicia sesión: tarjeta **Control** + contraseña `admin1`
-   (o **Monitor** + `monitor1` en el segundo celular).
+1. Abre AgroAlert e inicia sesión con `admin` / `admin1`, o con cualquier otra
+   cuenta creada desde la propia pantalla de acceso.
 2. En «01 / Conexión», toca **Buscar módulos emparejados** y concede el permiso
    de Bluetooth si lo pide.
 3. Toca **HC-05 · XX:XX:...**: el panel abre solo cuando llegan lecturas.
@@ -60,10 +60,10 @@ nunca vuelve a pedirlo: después de eso, conectar es tocar el HC-05 en la lista.
 ## Minuto 25-30: verificar
 
 - El panel muestra temperatura, humedad y el semáforo en vivo (cada 2 s).
-- En Control: **Encender** → clic del relé + LED rojo; el nodo responde
-  `RELE:ENCENDIDO_MANUAL` y la app la traduce a `ACK:1`.
+- En cualquiera de los dos celulares: **Encender** → clic del relé + LED rojo;
+  el nodo responde `RELE:ENCENDIDO_MANUAL` y la app la traduce a `ACK:1`.
 - **Volver al modo automático** → `MODO:AUTOMATICO` → `ACK:A`.
-- En Monitor: se refleja todo, sin botones.
+- El otro celular refleja el mismo estado; ambas cuentas tienen los botones.
 - Calienta el DHT11 con los dedos (baja ~0,1 °C por segundo) o sopla frío para
   cruzar los umbrales 10 °C / 5 °C y ver el semáforo completo.
 
@@ -84,5 +84,6 @@ El enlace Bluetooth SPP no usa el intercambio de tokens del protocolo Wi-Fi:
 la autenticación es el emparejamiento del HC-05 (PIN), y el nodo responde a
 cualquier celular ya emparejado. El firmware envía sus respuestas propias
 (`RELE:ENCENDIDO_MANUAL`, `MODO:AUTOMATICO`), que la app traduce a `ACK:1`,
-`ACK:0` y `ACK:A`; la autorización Control/Monitor se aplica igual que antes
-con las contraseñas locales y el rol elegido al iniciar sesión.
+`ACK:0` y `ACK:A`; la autorización depende de la cuenta que inició sesión
+(PBKDF2 local hoy, Firebase Auth al activarlo) y del emparejamiento del HC-05.
+Ya no hay perfiles Control/Monitor: toda cuenta puede controlar.

@@ -23,8 +23,8 @@ app — vinculación, permiso, conexión, telemetría y órdenes — sin hardwar
    escucha (en la pantalla de dispositivos, conexión entrante). Déjalo abierto.
 3. **Crea los macros**: en SBT, mantén presionados los botones M1…M7 y pega las
    tramas de la tabla siguiente (configura el fin de línea en LF, por defecto).
-4. **Celular B (la app)**: AgroAlert → tarjeta Control → `admin1` → **Buscar
-   módulos emparejados** → toca el celular A.
+4. **Celular B (la app)**: AgroAlert → `admin` / `admin1` → **Buscar módulos
+   emparejados** → toca el celular A.
 5. En A, toca un macro de telemetría: en B aparece la lectura al instante.
    Toca otro macro cada pocos segundos y verás el semáforo cambiar en vivo.
 6. En B toca **Encender**: en A llega el texto `1`. Responde tocando el macro
@@ -52,5 +52,5 @@ que tendrá con el Arduino detenido.
 ## Plan B para la demo
 
 Si mañana el Arduino falla, este mismo montón de macros convierte el celular A
-en «nodo de emergencia»: el profesor ve la app completa en vivo (panel, roles,
+en «nodo de emergencia»: el profesor ve la app completa en vivo (panel, controles,
 órdenes confirmadas) mientras revisas el hardware. Guarda los macros hoy.

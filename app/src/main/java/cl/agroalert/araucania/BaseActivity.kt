@@ -131,7 +131,7 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     protected fun requireSession(): Boolean {
-        if (agro.role != null) return true
+        if (agro.loggedIn) return true
         startActivity(Intent(this, LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
         finish()
         return false

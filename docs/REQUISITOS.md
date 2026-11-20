@@ -12,7 +12,7 @@ No se modificaron el informe ni el sitio web.
 
 La web documenta Arduino Uno R3 + DHT11 (D2), LEDs D3/D4/D5, relé Active LOW D8 y HC-05 D10/D11. El informe nuevo sustituye Bluetooth por Wi-Fi, pero **no precisa modelo de módulo ni protocolo de red**.
 
-Decisión de implementación: Android nativo en Kotlin con sockets TCP de la plataforma y mensajes de texto terminados en salto de línea. Se conserva la trama existente y los comandos `1`, `0`, `A`; se añade autenticación por rol y confirmación de órdenes. Este es un **contrato propuesto**, no una interfaz que ya exista en su Arduino.
+Decisión de implementación: Android nativo en Kotlin con sockets TCP de la plataforma y mensajes de texto terminados en salto de línea. Se conserva la trama existente y los comandos `1`, `0`, `A`; se añade autenticación de cuenta y confirmación de órdenes. Este es un **contrato propuesto**, no una interfaz que ya exista en su Arduino.
 
 ## Trazabilidad
 
@@ -20,11 +20,11 @@ Decisión de implementación: Android nativo en Kotlin con sockets TCP de la pla
 |---|---|
 | Android Studio y Kotlin | Proyecto Gradle Android, Kotlin 2.0.21 |
 | Material Design | Componentes Material, campos con etiqueta, botones y cuatro pantallas |
-| Usuario y contraseña | Cuentas locales precreadas `admin` (Control) y `monitor` (Monitor); claves iniciales `admin1`/`monitor1` siembras como hash PBKDF2 |
+| Usuario y contraseña | Cuenta única sin roles: semilla `admin/admin1` más cualquier cuenta creada desde la app; `admin1` sembrado como hash PBKDF2. Firebase Auth preparado en `docs/FIREBASE.md` |
 | Máximo tres intentos | Bloqueo temporal de 60 s persistido en preferencias privadas |
 | Contraseñas transformadas | PBKDF2, sal aleatoria por contraseña, comparación segura |
 | Dos celulares | Sesiones independientes al nodo compartido |
-| Rol Monitor | Panel de solo lectura; servidor rechaza sus comandos |
+| Cuenta única | Toda cuenta ve el panel y controla; el nodo sigue exigiendo su token |
 | Temperatura y humedad | Lecturas cada 2 s, formato validado |
 | Semáforo | >10 normal, >5 y ≤10 prehelada, ≤5 crítico |
 | Encender/apagar/auto | Comandos originales `1`/`0`/`A` |
@@ -39,7 +39,8 @@ Decisión de implementación: Android nativo en Kotlin con sockets TCP de la pla
 
 | Cambio | Motivo | Nota frente al informe |
 |---|---|---|
-| Cuentas precreadas `admin`/`monitor` en vez del formulario de primer inicio | Usabilidad en la demostración | El informe pedía accesos «definidos en primer inicio» y «sin claves predeterminadas». Ahora existen claves iniciales `admin1`/`monitor1`, sembradas como hash PBKDF2 la primera vez que se abre la app. Es una decisión del equipo; conviene comentarla con el docente. |
+| Semilla `admin/admin1` en vez del formulario de primer inicio | Usabilidad en la demostración | El informe pedía accesos «definidos en primer inicio» y «sin claves predeterminadas». Queda `admin1` como hash PBKDF2 la primera vez que se abre la app. Es una decisión del equipo; conviene comentarla con el docente. |
+| Borrar los perfiles Control/Monitor (1.5.0) | La persona usuaria pidió que cualquier cuenta creada vea y controle toda la información | Se pierde la separación de privilegios que evaluaba el informe; se compensa con autenticación, bloqueo y política de claves. Decisión explícita del equipo. |
 | Modo oscuro opcional con botón en cada pantalla | Sensibilidad visual de la persona usuaria | No aparece en el informe; funcionalidad extra, sin impacto en los requisitos de seguridad. |
 | Ícono adaptativo de araucaria araucana | Identidad regional del proyecto | No aparece en el informe; cambio cosmético. |
 

@@ -5,11 +5,11 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 ## Qué está implementado
 
 - APK con cuatro pantallas: acceso, conexión Wi-Fi, monitoreo y control.
-- Cuentas locales precreadas: `admin` (rol Control) y `monitor` (rol Monitor), con claves iniciales `admin1` y `monitor1`.
+- **Una sola clase de cuenta**: `admin/admin1` es la semilla inicial y cualquier cuenta creada ve y controla todo. Sin perfiles Control/Monitor. Preparación para Firebase en [docs/FIREBASE.md](docs/FIREBASE.md).
 - **Conexión Bluetooth directa al Arduino Uno + HC-05** documentado en la web del proyecto, sin servidor local: [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
 - **Arquitectura en dos etapas** que integra el trabajo de ambos integrantes: este repo es la capa de conexión real (Uno+HC-05 hoy, TCP mañana) y el repo de Sebastián Torres define la interfaz Compose y el firmware ESP32+Firebase de la etapa de escalabilidad: [docs/ARQUITECTURA_COMBINADA.md](docs/ARQUITECTURA_COMBINADA.md).
 - **Pantalla «Alertas y riesgos»** (frío, humedad ambiente y suelo) con banner de riesgo crítico en el panel: [docs/HUECOS_FUNCIONALES.md](docs/HUECOS_FUNCIONALES.md).
-- **Bitácora de campo persistente**: la actividad del nodo queda guardada en el teléfono aunque se cierre la app (propuesta de Sebastián Torres, portada con crédito).
+- **Bitácora de campo persistente**: la actividad del nodo queda en el teléfono mientras Firebase no esté configurado; con `google-services.json` pasa a Firestore (propuesta de Sebastián Torres, con crédito).
 - Contraseñas con sal aleatoria y PBKDF2-HMAC-SHA256 (120.000 iteraciones).
 - Bloqueo de ingreso por 60 segundos tras tres intentos fallidos, persistente al cerrar la app.
 - Modo oscuro opcional con botón «Modo oscuro / Modo claro» en cada pantalla, persistente al cerrar la app.
@@ -17,9 +17,9 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 - Red TCP local, lectura cada 2 segundos desde el nodo, sin bloquear la interfaz.
 - Panel de temperatura, humedad, semáforo, relé, modo y actividad reciente.
 - Semáforo: normal >10 °C, prehelada >5 y ≤10 °C, riesgo crítico ≤5 °C.
-- Usuario Monitor sin controles; el servidor también rechaza sus órdenes.
+- Cualquier cuenta puede controlar; el nodo sigue exigiendo su token para aceptar órdenes.
 - Comandos `1`, `0`, `A`, confirmación explícita y bloqueo con datos ausentes, antiguos o sensor en error.
-- Simulador Python con estado compartido para dos o más celulares y claves independientes por rol.
+- Simulador Python con estado compartido para dos o más celulares; la app usa la clave `CONTROL` del nodo por compatibilidad de protocolo, no como perfil de cuenta.
 - Pruebas del protocolo, contraseñas, bloqueo y comunicación de dos clientes.
 
 **Estado de la integración física:** el módulo Wi-Fi aún no está identificado. La app se puede probar con el simulador. El Arduino/HC-05 publicado en la web **no implementa aún este enlace Wi-Fi**; falta adaptar el firmware al hardware elegido. No se ha probado con un Arduino físico.
@@ -29,7 +29,7 @@ Aplicación Android nativa en **Kotlin**, creada para el proyecto de **Darío Ca
 - Compilación `assembleDebug`, pruebas unitarias y Lint: **exitosas**.
 - Flujo completo en emulador **Android 16 (API 36)**: creación de accesos, inicio de sesión, conexión TCP, telemetría en vivo y panel.
 - Órdenes `1`, `0` y `A` verificadas contra el simulador, con confirmación visible del nodo.
-- Segundo cliente en rol **Monitor** conectado en paralelo: recibió los mismos cambios de relé y modo, sin permiso para controlar.
+- Segundo cliente con otra cuenta conectado en paralelo: recibió los mismos cambios de relé y modo, con acceso completo.
 - Pruebas de integración del simulador: **5/5 exitosas**; pruebas unitarias Android: **6/6 exitosas**.
 - **No probado aún** en celulares físicos ni con Arduino real. Las capturas incluidas son del simulador y están etiquetadas así.
 - Evidencias: [panel](docs/evidencias/02_panel_simulacion.png) y [control](docs/evidencias/03_control_simulacion.png).
@@ -101,23 +101,23 @@ La terminal muestra el puerto **5000** y dos **claves del nodo**, una por rol. S
 ### 3. Usar la app
 
 1. Instala el APK en ambos celulares.
-2. Inicia sesión con las cuentas precreadas: **admin / admin1** (Control) en el celular A y **monitor / monitor1** (Monitor) en el celular B. La clave de inicio de sesión es distinta de la clave del nodo.
-3. En ambos, escribe la misma IP y puerto. Introduce en cada uno la **clave del nodo correspondiente a su rol** que muestra el simulador.
+2. Inicia sesión con **admin / admin1** en el celular A y crea otra cuenta en el celular B (o usa la misma). Todas las cuentas tienen acceso completo.
+3. En ambos, escribe la misma IP y puerto. Introduce en cada uno la **clave `CLAVE_CONTROL`** que muestra el simulador.
 4. Verifica que los dos paneles muestran las mismas lecturas.
-5. En el celular Control, abre **Controlar el riego** y prueba encender, apagar y automático. Monitor debe reflejar el cambio y no mostrar controles.
+5. En cualquiera de los dos, abre **Controlar el riego** y prueba encender, apagar y automático; el otro refleja el cambio.
 6. Detén el servidor: ambos equipos deben avisar la pérdida del enlace en aproximadamente 7–8 segundos, marcar los datos antiguos y bloquear órdenes.
 
-La app etiqueta visiblemente los datos del simulador. **No representan una medición real y no accionan hardware.** El modo manual del simulador dura como máximo 30 segundos; vuelve a automático al vencer ese plazo o desconectarse el último cliente Control.
+La app etiqueta visiblemente los datos del simulador. **No representan una medición real y no accionan hardware.** El modo manual del simulador dura como máximo 30 segundos; vuelve a automático al vencer ese plazo o desconectarse el último cliente autenticado.
 
 ## Arquitectura
 
 ```text
-Android A · Control ── TCP/Wi-Fi ─┐
+Android A · cuenta ── TCP/Wi-Fi ─┐
                                 ├── Nodo compartido (actualmente simulador)
-Android B · Monitor ── TCP/Wi-Fi ─┘        └── Futuro: puente Wi-Fi ↔ Arduino
+Android B · cuenta ── TCP/Wi-Fi ─┘        └── Futuro: puente Wi-Fi ↔ Arduino
 ```
 
-Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicación directa teléfono-a-teléfono ni nube. Conviene validar con el docente si esa interconexión mediada cumple su interpretación del criterio 2.1.4.
+Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicación directa teléfono-a-teléfono. Firebase Auth/Firestore está preparado pero inactivo hasta que exista `app/google-services.json`; ver [docs/FIREBASE.md](docs/FIREBASE.md).
 
 | Archivo | Responsabilidad |
 |---|---|
@@ -142,6 +142,7 @@ Los celulares sincronizan sus vistas mediante el mismo nodo. No hay comunicació
 - [Mapa de cableado del Uno + HC-05 y compilación del firmware](docs/CABLEADO_ARDUINO.md).
 - [Rúbrica U3: evidencia por criterio y guion de demo](docs/RUBRICA_DEMO.md).
 - [Dónde y cómo guarda los datos la app (respuesta al docente)](docs/ARQUITECTURA_DATOS.md).
+- [Firebase listo para activar: pasos, reglas y límites](docs/FIREBASE.md).
 - [Probar el Bluetooth sin Arduino, con dos celulares](docs/SIMULADOR_BLUETOOTH.md).
 - [Huecos funcionales y ampliaciones pendientes](docs/HUECOS_FUNCIONALES.md): avisos de riesgo crítico, humedad de suelo y más control sobre el huerto.
 
@@ -153,8 +154,8 @@ y se visualiza en **https://dariochino.github.io/agroalert-web/**, junto con la
 descarga del APK.
 
 El `.gitignore` excluye `build/`, `local.properties`, `keystore/`,
-`simulator/credentials.json` y `entregables/`: la clave de firma y las claves del
-nodo **nunca** se publican. Para subir cambios futuros:
+`simulator/credentials.json`, `app/google-services.json` y `entregables/`:
+la clave de firma, la configuración de Firebase y las claves del nodo **nunca** se publican. Para subir cambios futuros:
 
 ```powershell
 git add .
@@ -171,12 +172,13 @@ entrega con otra:
 
 | Versión | Tag | Qué agrega |
 |---|---|---|
+| 1.5.0 | `v1.5.0` | Cuenta única sin roles, política de claves reconectada, Firebase Auth/Firestore preparado pero inactivo, corrección v1.4 de Bluetooth |
 | 1.1.0 | `v1.1.0` | Conexión Bluetooth SPP directa al Arduino + HC-05, login con tarjetas de perfil, modo BT activable desde la app, `attack.py` de seguridad, guía de demo en 30 minutos |
 | 1.0.0 | `v1.0.0` | Cuatro pantallas, TCP/Wi-Fi al simulador, PBKDF2, bloqueo, modo oscuro, ícono adaptativo |
 
 ## Alcance del prototipo
 
-La implementación aplica prácticas relacionadas con ISO/IEC 27400; **no implica certificación ni cumplimiento integral de la norma**. Las contraseñas locales se almacenan transformadas, pero el TCP del prototipo no utiliza TLS: las claves de acceso al nodo y la telemetría no tienen cifrado de extremo a extremo. WPA2/WPA3 protege el enlace inalámbrico y no sustituye TLS. El inicio de sesión local es una barrera de la instalación; el nodo aplica la autorización efectiva mediante claves independientes por rol.
+La implementación aplica prácticas relacionadas con ISO/IEC 27400; **no implica certificación ni cumplimiento integral de la norma**. Las contraseñas locales se almacenan transformadas, pero el TCP del prototipo no utiliza TLS: las claves de acceso al nodo y la telemetría no tienen cifrado de extremo a extremo. WPA2/WPA3 protege el enlace inalámbrico y no sustituye TLS. El inicio de sesión (local hoy, Firebase Auth cuando se active) es la barrera de la app; el nodo aplica la autorización efectiva mediante su token, que la app envía siempre como `CONTROL` por compatibilidad con el prototipo.
 
 El monitoreo está orientado al uso con la app abierta. No incluye servicio de alarmas en segundo plano, notificaciones push, almacenamiento histórico permanente ni acceso desde Internet. Wi-Fi amplía la cobertura respecto del montaje Bluetooth, pero depende del alcance y conectividad de la red instalada.
 

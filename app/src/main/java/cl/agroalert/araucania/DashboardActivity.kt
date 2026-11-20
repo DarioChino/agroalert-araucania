@@ -29,7 +29,7 @@ class DashboardActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!requireSession()) return
-        page("02 / Panel · ${agro.role!!.label}", "Estado del huerto", "Una vista clara para anticiparte al frío.")
+        page("02 / Panel", "Estado del huerto", "Una vista clara para anticiparte al frío.")
         source = label("", 12, amber, true)
         connection = label("", 14, green, true)
         age = label("Esperando la primera lectura…", 12, muted)
@@ -54,12 +54,7 @@ class DashboardActivity : BaseActivity() {
         label("● Prehelada · entre 5 y 10 °C", 14, amber, parent = limits)
         label("● Riesgo crítico · 5 °C o menos", 14, red, parent = limits)
         button("Alertas y riesgos") { startActivity(Intent(this, AlertsActivity::class.java)) }
-        if (agro.role == Role.CONTROL) {
-            button("Controlar el riego") { startActivity(Intent(this, ControlActivity::class.java)) }
-        } else {
-            label("MODO MONITOR · Acceso de solo lectura", 13, green, true)
-            gap()
-        }
+        button("Controlar el riego") { startActivity(Intent(this, ControlActivity::class.java)) }
         button("Cambiar conexión", secondary = true) { disconnectAndReturn() }
         button("Cerrar sesión", secondary = true) { logout() }
         button(if (agro.darkMode) "Modo claro" else "Modo oscuro", secondary = true) { toggleDarkMode() }
@@ -71,7 +66,10 @@ class DashboardActivity : BaseActivity() {
         label("BITÁCORA DE CAMPO · PERSISTENTE", 11, muted, true)
         gap(8)
         history = label("", 13, muted)
-        label("Estos eventos quedan guardados en el teléfono aunque cierres la app. Bitácora basada en la propuesta de Sebastián Torres.", 12, muted)
+        label(if (BuildConfig.CLOUD_ENABLED)
+            "Estos eventos quedan guardados en Firebase, no en el teléfono. Bitácora basada en la propuesta de Sebastián Torres."
+        else "Estos eventos quedan guardados en el teléfono aunque cierres la app. Bitácora basada en la propuesta de Sebastián Torres.",
+            12, muted)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { disconnectAndReturn() }
         })

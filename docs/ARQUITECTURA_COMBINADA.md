@@ -11,7 +11,7 @@ transporte Wi-Fi → Bluetooth del prototipo de campo.
 
 | Repositorio | Rol en el proyecto | Autor |
 |---|---|---|
-| [`agroalert-araucania`](https://github.com/DarioChino/agroalert-araucania) (este) | **Capa de conexión y seguridad real**: cliente TCP/SPP que habla con el nodo, protocolo `TELEMETRIA`, PBKDF2, RBAC, bloqueo por intentos, caducidad de datos, simuladores y auditoría de seguridad (`attack.py`). | Darío |
+| [`agroalert-araucania`](https://github.com/DarioChino/agroalert-araucania) (este) | **Capa de conexión y seguridad real**: cliente TCP/SPP que habla con el nodo, protocolo `TELEMETRIA`, PBKDF2, bloqueo por intentos, política de claves, caducidad de datos, simuladores y auditoría de seguridad (`attack.py`). | Darío |
 | [`IOT-APP-ANDROID-STUDIO-AGROALERT`](https://github.com/sebatmail/IOT-APP-ANDROID-STUDIO-AGROALERT) | **Capa de presentación y evolución**: interfaz Jetpack Compose + MVVM, bitácora de campo, `EncryptedSharedPreferences`, y firmware ESP32-WROOM-32 (Wi-Fi + Firebase RTDB) que define la segunda etapa. | Sebastián |
 
 Ningún trabajo se descarta: las dos aplicaciones conviven en el mismo teléfono
@@ -58,8 +58,8 @@ Wi-Fi hacia la nube y la interfaz evoluciona a la app Compose de Sebastián.
    campo, no un reemplazo de la arquitectura.
 4. **La seguridad se mantuvo por capas.** El PIN trivial del HC-05 (motivo por
    el cual se evaluó retirarlo) se mitiga en la aplicación: contraseñas con
-   PBKDF2, RBAC (solo el rol Control opera el relé), bloqueo por intentos,
-   caducidad de datos a 7 s y confirmación de cada orden. La auditoría
+   PBKDF2, autenticación de cuenta (toda cuenta opera el relé desde 1.5.0),
+   bloqueo por intentos, caducidad de datos a 7 s y confirmación de cada orden. La auditoría
    [`simulator/attack.py`](../simulator/attack.py) resistió 8 de 9 ataques, y el
    alcance de 10 m punto a punto con un solo cliente da una superficie de
    ataque menor que una red Wi-Fi compartida. El salto a TLS llega con la

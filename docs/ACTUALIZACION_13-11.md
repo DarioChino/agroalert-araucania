@@ -1,5 +1,8 @@
 # Actualización del 13-11-2026
 
+> Documento histórico: describe la versión 1.2.0. Desde la 1.5.0 no hay perfiles
+> Control/Monitor y no existe la cuenta `monitor`; ver [FIREBASE.md](FIREBASE.md).
+
 Paquete de mejoras del 13-11-2026: refresco de bibliotecas, ícono adaptativo de
 araucaria, cuentas locales precreadas y modo oscuro opcional. Se recompiló,
 re-testearon y regeneraron los APK de entrega.

@@ -9,7 +9,8 @@ class AgroApplication : Application() {
     private lateinit var ui: SharedPreferences
     val node = NodeConnection()
     lateinit var credentials: Credentials; private set
-    var role: Role? = null
+    /** Sesión en memoria: una sola clase de cuenta, sin perfiles. */
+    var loggedIn = false
     /** Modo oscuro opcional, elegido por la persona usuaria y persistente. */
     val darkMode: Boolean get() = ui.getBoolean("dark", false)
     override fun onCreate() {
@@ -23,5 +24,9 @@ class AgroApplication : Application() {
         credentials = Credentials(this)
     }
     fun setDarkMode(value: Boolean) { ui.edit().putBoolean("dark", value).apply() }
-    fun logout() { node.disconnect("Sesión cerrada"); role = null }
+    fun logout() {
+        node.disconnect("Sesión cerrada")
+        if (BuildConfig.CLOUD_ENABLED) CloudStore.signOut()
+        loggedIn = false
+    }
 }
