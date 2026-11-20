@@ -38,7 +38,10 @@ facturación (Spark: 3.000 DAU; Blaze: 50.000 MAU gratis y luego pago). Por eso
 se hizo desde la consola, sin costo.
 
 La semilla `admin / admin1` y las cuentas creadas desde la app funcionan con Auth
-gestionando la clave.
+gestionando la clave. La semilla se creó en Firebase Auth con uid `admin` y su
+documento `users/admin` (`currentHash`, `history` vacío, `changedAt`). Es una
+credencial pública de demo: cámbiala o bórrala antes de usar el proyecto con
+datos reales.
 
 ## Compilar
 
